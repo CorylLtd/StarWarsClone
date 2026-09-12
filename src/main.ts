@@ -1,14 +1,11 @@
 import { SoundEngine } from './audio/sound';
 import { DT } from './game/config';
-import { createRng } from './game/random';
 import { createInitialState } from './game/state';
 import type { GameEvent } from './game/types';
-import { advanceStage, step } from './game/update';
+import { step } from './game/update';
 import { YokeInput } from './input/yoke';
 import { WorldRenderer } from './render/renderer';
-import { Hud } from './ui/hud';
 import { ScreenFrame } from './ui/screenFrame';
-import { Screens } from './ui/screens';
 
 const HIGH_SCORE_KEY = 'starwars.highScore';
 /** Draw at most this often; the simulation still steps at DT on every animation frame. */
@@ -34,17 +31,14 @@ function saveHighScore(value: number): void {
 const screen = document.getElementById('screen')!;
 const state = createInitialState(Date.now() >>> 0, loadHighScore());
 const input = new YokeInput(window, screen);
-const world = new WorldRenderer(screen, createRng(0x5741_5253));
+const world = new WorldRenderer(screen);
 new ScreenFrame(window, screen, () => world.resize());
-const hud = new Hud(screen);
-const screens = new Screens(screen);
 const sound = new SoundEngine();
 
 if (import.meta.env.DEV) {
-  const dev = window as unknown as { __sw: typeof state; __swSound: typeof sound; __swAdvance: () => void };
+  const dev = window as unknown as { __sw: typeof state; __swSound: typeof sound };
   dev.__sw = state;
   dev.__swSound = sound;
-  dev.__swAdvance = () => advanceStage(state);
 }
 
 // Open the game with ?mute to run without any audio.
@@ -76,11 +70,15 @@ function frame(now: number): void {
   accumulator += elapsed;
   renderElapsed += elapsed;
 
-  const snapshot = input.snapshot();
-  while (accumulator >= DT) {
-    step(state, snapshot, DT);
-    for (const e of state.events) dispatch(e);
-    accumulator -= DT;
+  // Only read the input when a field will run, so one-shot presses latched in
+  // the input are never consumed by a display frame that steps nothing.
+  if (accumulator >= DT) {
+    const snapshot = input.snapshot();
+    while (accumulator >= DT) {
+      step(state, snapshot, DT);
+      for (const e of state.events) dispatch(e);
+      accumulator -= DT;
+    }
   }
 
   if (now - lastRender < MIN_RENDER_INTERVAL_MS) {
@@ -92,8 +90,6 @@ function frame(now: number): void {
   renderElapsed = 0;
 
   world.render(state, frameDt);
-  hud.update(state);
-  screens.update(state);
   requestAnimationFrame(frame);
 }
 

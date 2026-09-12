@@ -95,7 +95,12 @@ export const DOGFIGHT = {
   retreatConvergeUntil: 0x900 * 2,
   /** The approach turns the view until the Death Star is within this of straight ahead (cos). */
   approachFacingCos: 0x3f00 / 0x4000,
-  approachZoomFrames: 57,
+  /**
+   * The approach zoom: the Death Star's scale value (binary * 128 + linear)
+   * falls from start to end at an accelerating rate, about 57 frames.
+   */
+  zoomStart: 7 * 128 + 127,
+  zoomEnd: 3 * 128 + 16,
 };
 
 export const FIREBALL = {

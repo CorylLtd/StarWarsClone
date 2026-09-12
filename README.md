@@ -14,10 +14,12 @@ for exactly what the recreation does and does not take from the original.
 
 ## Status
 
-Milestone 1 of 9: the skeleton. A letterboxed 4:3 vector display with bloom, a
-yoke driven by mouse, gamepad or keyboard, a cursor, a mode/stage/wave state
-machine and its tests. Placeholder shapes stand in for the traced arcade
-geometry until the Dogfight milestone.
+Milestone 2 of 9: the Dogfight is playable. Pull the trigger, pick a Death
+Star, and fight the TIE Fighters and Darth's Ship with the original's own
+choreography, fire rates, hit tests, shield rules and timings, drawn with
+shapes traced from the vector ROM through a camera calibrated to the
+arcade's projection. The Surface and Trench stages are stubs, and there is no
+sound yet.
 
 ## Running it
 
@@ -29,12 +31,14 @@ npm run build      # type-check, then bundle into dist/
 ```
 
 Controls: move the mouse to aim (the screen's edges are full yoke deflection),
-click or press Space to fire, Enter to start. A gamepad's left stick, face
-buttons and Start work too, as do the arrow keys or WASD.
+click, Space or Enter to fire; as on the cabinet, the trigger also starts a
+game. A gamepad's left stick and buttons work too, as do the arrow keys or
+WASD.
 
-Open the game with `?mute` on the URL to run without audio. In dev builds the
-live game state is exposed as `window.__sw`, the sound engine as
-`window.__swSound`, and `window.__swAdvance()` jumps to the next stage.
+Open the game with `?mute` on the URL to run without audio, `?nobloom` to see
+the raw lines, or `?bloom=strength,radius,threshold` to tune the glow. In dev
+builds the live game state is exposed as `window.__sw` and the sound engine as
+`window.__swSound`.
 
 ## How the code is organised
 
@@ -48,12 +52,20 @@ src/
   main.ts   wires everything together and runs the fixed-step frame loop
 ```
 
-`src/game` knows nothing about rendering or sound. It operates on a plain
-`GameState`, steps at a fixed 60 Hz, draws all randomness from a seeded
-generator, and reports one-off happenings by pushing `GameEvent` values that
-`main.ts` forwards to the renderer and sound engine. The renderer's camera and
-the simulation's cursor hit-test projection read the same `CAMERA` record in
-`src/game/config.ts`, so what looks aimed is aimed.
+`src/game` knows nothing about rendering or sound. It works in the original's
+own frame and units (X forward, Y right, Z up, the arcade's universe units and
+vector-generator screen units), steps once per display field (about 42 Hz)
+with game logic every second field as the cabinet did, draws all randomness
+from a seeded generator, and reports one-off happenings by pushing `GameEvent`
+values that `main.ts` forwards to the renderer and sound engine. The
+simulation projects objects to screen units itself for the cursor hit tests;
+the renderer's arcade camera reproduces the same projection, vertical squash
+included, so what looks aimed is aimed.
+
+Traced data lives in `src/data`: the object tables and 2-D pictures in
+`vectorRom.ts` and `hud.ts`, the enemy choreography, level lists and wave
+sets in `choreography.ts`. The notes those were derived from are in
+`docs/reference`.
 
 The vocabulary used throughout the code follows the arcade's own manuals; see
 [CONTEXT.md](CONTEXT.md).

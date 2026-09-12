@@ -8,9 +8,8 @@ const UP = new Set(['ArrowUp', 'KeyW', 'w', 'W']);
 const DOWN = new Set(['ArrowDown', 'KeyS', 's', 'S']);
 const LEFT = new Set(['ArrowLeft', 'KeyA', 'a', 'A']);
 const RIGHT = new Set(['ArrowRight', 'KeyD', 'd', 'D']);
-const FIRE = new Set(['Space', 'ControlLeft', 'ControlRight', ' ', 'Control']);
-const START = new Set(['Enter']);
-const ALL = new Set([...UP, ...DOWN, ...LEFT, ...RIGHT, ...FIRE, ...START]);
+const FIRE = new Set(['Space', 'ControlLeft', 'ControlRight', 'Enter', ' ', 'Control']);
+const ALL = new Set([...UP, ...DOWN, ...LEFT, ...RIGHT, ...FIRE]);
 
 function keyId(e: KeyboardEvent): string {
   return e.code || e.key;
@@ -20,7 +19,6 @@ function keyId(e: KeyboardEvent): string {
 const KEY_RATE = 4;
 const GAMEPAD_DEADZONE = 0.12;
 const GAMEPAD_FIRE_BUTTONS = [0, 1, 2, 3, 4, 5, 6, 7];
-const GAMEPAD_START_BUTTON = 9;
 
 /**
  * Produces the yoke snapshot from whichever source the player is using.
@@ -93,7 +91,6 @@ export class YokeInput {
     let x = this.mouse.x;
     let y = this.mouse.y;
     let fire = this.mouseButton || this.mouseClicked || this.any(FIRE);
-    let start = this.any(START);
     this.mouseClicked = false;
 
     const pad = firstGamepad();
@@ -105,7 +102,6 @@ export class YokeInput {
         y = clamp(py, -1, 1);
       }
       if (GAMEPAD_FIRE_BUTTONS.some((b) => pad.buttons[b]?.pressed)) fire = true;
-      if (pad.buttons[GAMEPAD_START_BUTTON]?.pressed) start = true;
     }
 
     if (keyTargetX !== 0 || keyTargetY !== 0 || this.key.x !== 0 || this.key.y !== 0) {
@@ -114,7 +110,7 @@ export class YokeInput {
     }
 
     this.pressed.clear();
-    return { x, y, fire, start };
+    return { x, y, fire };
   }
 }
 

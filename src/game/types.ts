@@ -60,15 +60,14 @@ export interface Alien {
 }
 
 export interface ScriptState {
-  /** Name of the running script and the index of the current op. */
-  name: string;
+  /** Index of the current op in the choreography program. */
   pc: number;
   /** Frames left on the current timed op. */
   timer: number;
   /** Active .CUNTIL mask: any of these status bits set skips ahead. */
   untilMask: number;
-  /** Return stack for gosub. */
-  stack: { name: string; pc: number }[];
+  /** Single return slot for gosub, or -1. */
+  returnPc: number;
   /** The twirl and move flags held for the current op. */
   flags: number;
 }
@@ -84,6 +83,8 @@ export interface Fireball {
   /** Screen position remembered for glow/hurt drawing. */
   at: ScreenPoint;
   halfDistance: number;
+  /** Set by the view when the shot has reached the windshield this frame. */
+  impacting: boolean;
 }
 
 export interface ExplosionPiece {
@@ -140,9 +141,13 @@ export interface Dogfight {
   stars: Star[];
   /** Whether Darth has been drawn this wave (his line is spoken once). */
   darthSeen: boolean;
+  /** Slot of the alien currently roaring past, if any. */
+  passbySlot: number | null;
   /** Death Star approach zoom state. */
   zoomScale: number;
   zoomStep: number;
+  /** Unit vector from the player toward the Death Star (universe +X). */
+  deathStarDir: Vec;
 }
 
 export type GameEvent =
@@ -178,6 +183,8 @@ export interface GameState {
   difficultyBump: number;
   firstWave: boolean;
   stage: StageKind;
+  /** Game frames since the current stage began. */
+  stageFrames: number;
   score: number;
   highScore: number;
   /** Deflector Shields remaining; -1 once the fatal hit has landed. */
@@ -191,6 +198,8 @@ export interface GameState {
   player: Player;
   dogfight: Dogfight;
   fireHeld: boolean;
+  /** A fire press seen on any field since the last game frame, so no press falls between frames. */
+  fireLatch: boolean;
   rng: Rng;
   /** Events raised by the most recent step. Cleared at the start of every step. */
   events: GameEvent[];

@@ -31,6 +31,21 @@ The stage flown down the Death Star's trench, past Catwalks and Trench Turrets,
 to the Exhaust Port.
 _Avoid_: trench run, third stage, final stage
 
+**Death Star Select**:
+The screen after the start where the player shoots one of three Death Stars
+to choose the starting wave (1, 3 or 5) before a countdown picks wave 1.
+_Avoid_: difficulty select, menu, level select
+
+**Retreat**:
+The end of the Dogfight, when every enemy races back to the Death Star and
+stops firing.
+_Avoid_: run away, exit
+
+**Approach**:
+After the Retreat, the view turns to the Death Star and it swells until the
+next stage begins.
+_Avoid_: zoom, hyperspace, transition
+
 **Attract**:
 The sequence of screens shown when no game is in progress: the banner and
 storyline, the flight instructions, the scoring page, and the high score table.
@@ -79,6 +94,30 @@ _Avoid_: max shields, max lives
 **Play Difficulty**:
 The operator's base difficulty setting: Easy, Moderate, Hard, or Hardest.
 _Avoid_: skill level, DIP difficulty
+
+**Hardness**:
+The single number, wave plus Play Difficulty plus the per-wave bump, that sets
+how often enemies fire.
+_Avoid_: difficulty level, rank
+
+**Game Frame**:
+One tick of the game's logic, every twelfth interrupt, about 21 a second.
+_Avoid_: tick, update, step
+
+**Field**:
+One refresh of the vector display, every sixth interrupt, about 42 a second.
+The Cursor and sprite animation move once per Field.
+_Avoid_: frame, vsync, refresh
+
+**Choreography**:
+The script an enemy follows: timed moves and turns, with branches on what the
+player is doing.
+_Avoid_: AI, behaviour tree, flight plan
+
+**Wave Set**:
+The list of enemy groups a wave draws from, in order; the last group repeats
+until the Dogfight ends.
+_Avoid_: spawn table, level list
 
 ### Enemies and hazards
 
