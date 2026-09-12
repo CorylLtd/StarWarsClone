@@ -42,7 +42,9 @@ game. A gamepad's left stick and buttons work too, as do the arrow keys or
 WASD.
 
 Open the game with `?mute` on the URL to run without audio, `?nobloom` to see
-the raw lines, or `?bloom=strength,radius,threshold` to tune the glow. In dev
+the raw lines, `?bloom=strength,radius,threshold` to tune the glow, or
+`?music=ours` or `?speech=ours` to hear this project's compositions or voices
+when the original's tables and phrases are installed locally. In dev
 builds the live game state is exposed as `window.__sw`, the sound engine as
 `window.__swSound`, the renderer as `window.__swWorld`, and
 `window.__swEnterStage(stage, wave)` jumps straight into a stage;
@@ -67,7 +69,10 @@ frequency envelopes, ties, glides, key offsets) over a small note notation,
 and `src/audio/musicCues.ts` holds the cues. Those cues are original
 compositions: the original's music tables encode the film score, so only the
 cue points, lengths, tempi and voice roles are kept (see
-`docs/reference/music-player.md`). The `AudioContext` is created lazily on the
+`docs/reference/music-player.md`). With a local copy of the Atari source
+listing, `npm run music` decodes the original's own tune tables into a
+git-ignored file and the game plays those instead (`?music=ours` brings the
+compositions back); see the amendment in ADR 0001. The `AudioContext` is created lazily on the
 first key or pointer event, because browsers refuse to start audio without a
 gesture.
 
@@ -78,7 +83,10 @@ in as `src/data/speech.ts` so nothing but macOS is needed to regenerate it
 (`npm run speech`). `src/audio/tms5220Processor.ts` models the chip in an
 AudioWorklet, and `src/audio/speech.ts` keeps the sound board's sentence
 queue, pauses and the lines it dropped when busy. The speech ROMs, which hold
-the film's actors, are never read (see `docs/reference/speech.md`).
+the film's actors, are not part of the repository (see
+`docs/reference/speech.md`); with a local copy of the ROM set,
+`npm run speech:original` decodes the phrases into a git-ignored file and the
+game speaks those instead (`?speech=ours` brings our voices back).
 
 ## How the code is organised
 
@@ -119,5 +127,7 @@ The vocabulary used throughout the code follows the arcade's own manuals; see
 
 Behaviour, timings and shapes are checked against the original running in MAME
 and against Atari's published source listing. Neither the ROM set nor that
-source is part of this repository, and the path to a local MAME ROM directory
-belongs in the git-ignored `local.config.json`.
+source is part of this repository. Local paths belong in the git-ignored
+`local.config.json`: `atariSource`, a directory or zip holding the listing,
+is what `npm run music` reads; `romSet`, the MAME zip or a directory of its
+files, is what `npm run speech:original` reads.

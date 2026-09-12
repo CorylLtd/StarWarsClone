@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "speech": "node scripts/encodeSpeech.ts"
+    "speech": "node scripts/encodeSpeech.ts",
+    "music": "node scripts/extractMusic.ts",
+    "speech:original": "node scripts/extractSpeech.ts"
   },
   "dependencies": {
     "three": "0.186.0"

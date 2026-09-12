@@ -1,13 +1,20 @@
 import { COMPOUND, EFFECTS, type Effect } from './effects';
-import { compileCue, MUSIC_AUDCTL, MUSIC_CHIPS, STEP_HZ, type MusicTrack } from './music';
+import { compileCue, MUSIC_AUDCTL, MUSIC_CHIPS, STEP_HZ, type MusicCue, type MusicTrack } from './music';
+import { originalCue, type OriginalMusic } from './musicBytes';
 import { MUSIC_CUES } from './musicCues';
+
+/** The original's tune tables, if scripts/extractMusic.ts has decoded them locally (the file is git-ignored). */
+const LOCAL_MUSIC = import.meta.glob('../data/local/music.ts', { eager: true }) as Record<string, { ORIGINAL_MUSIC: OriginalMusic }>;
+export const ORIGINAL_MUSIC: OriginalMusic | null = Object.values(LOCAL_MUSIC)[0]?.ORIGINAL_MUSIC ?? null;
 import { PokeyBoard, POKEY_CLOCK_HZ, type PokeyWrite } from './pokey';
-import { SpeechEngine } from './speech';
+import { ORIGINAL_SPEECH, SpeechEngine } from './speech';
 
 export { POKEY_CLOCK_HZ };
 
 /** Level of the speech chip against the POKEYs. */
 export const SPEECH_GAIN = 1.3;
+/** The original's phrases were recorded hotter than our voices encode. */
+export const SPEECH_GAIN_ORIGINAL = 0.85;
 
 /**
  * The sound engine: four modelled POKEY chips driven by the original's effect
@@ -29,6 +36,10 @@ export class SoundEngine {
   /** The cue playing on the music chips and when it ends, in context time. */
   private music: { cue: string; until: number } | null = null;
   muted = false;
+  /** Play the original's tables when they are installed locally; false keeps this project's compositions. */
+  useOriginalMusic = ORIGINAL_MUSIC !== null;
+  /** Likewise the original's speech phrases against this project's voices. */
+  useOriginalSpeech = true;
 
   /** Browsers refuse to start audio without a user gesture; call from a key or pointer handler. */
   unlock(): void {
@@ -50,6 +61,8 @@ export class SoundEngine {
     limiter.connect(this.context.destination);
     this.board = new PokeyBoard(this.context, this.master, POKEY_CLOCK_HZ);
     this.speech = new SpeechEngine(this.context, this.master, SPEECH_GAIN);
+    this.speech.useOriginal = this.useOriginalSpeech;
+    if (this.useOriginalSpeech && ORIGINAL_SPEECH) this.speech.setGain(SPEECH_GAIN_ORIGINAL);
   }
 
   /** Queue a Speech Line; unknown lines are ignored, and lines the board dropped when busy are dropped here too. */
@@ -109,10 +122,13 @@ export class SoundEngine {
   }
 
   private track(cue: string): MusicTrack | null {
-    let track = this.tracks.get(cue) ?? null;
-    if (!track && MUSIC_CUES[cue]) {
-      track = compileCue(MUSIC_CUES[cue]);
-      this.tracks.set(cue, track);
+    const key = `${this.useOriginalMusic ? 'original' : 'ours'}:${cue}`;
+    let track = this.tracks.get(key) ?? null;
+    if (!track) {
+      const source: MusicCue | null = (this.useOriginalMusic && ORIGINAL_MUSIC ? originalCue(ORIGINAL_MUSIC, cue) : null) ?? MUSIC_CUES[cue] ?? null;
+      if (!source) return null;
+      track = compileCue(source);
+      this.tracks.set(key, track);
     }
     return track;
   }

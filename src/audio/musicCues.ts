@@ -182,7 +182,7 @@ const cantina: MusicCue = {
   ],
 };
 
-// The Torpedo's dive: four voices sliding down in semitones, faster and faster, then again in a rush.
+// The Torpedo's dive: four voices sliding down in semitones, faster and faster, under half a second.
 function torpedoVoice(offset: number): string {
   const run = (from: number, rateStart: number, rateStep: number, notes: number) => {
     const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -193,7 +193,7 @@ function torpedoVoice(offset: number): string {
     }
     return out.join(' ');
   };
-  return `{vol 15} {env none} {synth on} {key ${offset}} ${run(84, 60, 2, 40)} ${run(84, 200, 1, 40)} R:2`;
+  return `{vol 15} {env none} {synth on} {key ${offset}} ${run(84, 150, 2, 40)} R:2`;
 }
 const torpedo: MusicCue = {
   voices: [torpedoVoice(0), torpedoVoice(-3), torpedoVoice(-7), torpedoVoice(-12)],
@@ -225,5 +225,5 @@ export const ORIGINAL_CUE_SECONDS: Record<string, number> = {
   end: 13.79,
   ben: 12.68,
   cantina: 27.64,
-  torpedo: 1.3,
+  torpedo: 0.44,
 };

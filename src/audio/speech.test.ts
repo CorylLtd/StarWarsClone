@@ -169,3 +169,28 @@ describe('the lines', () => {
     }
   });
 });
+
+describe('the original\'s phrases, when installed locally', () => {
+  it('decode through the chip model as speech that ends', async () => {
+    const local = import.meta.glob('../data/local/speech.ts', { eager: true }) as Record<string, { ORIGINAL_SPEECH: Record<number, { frames: number; data: string }> }>;
+    const words = Object.values(local)[0]?.ORIGINAL_SPEECH;
+    if (!words) return;
+    const { ORIGINAL_WORD_INDEX } = await import('./speechLines');
+    for (const index of Object.values(ORIGINAL_WORD_INDEX)) expect(words[index], `word ${index}`).toBeDefined();
+    for (const [index, w] of Object.entries(words)) {
+      const chip = new Tms5220(TMS5220_TABLES);
+      const bytes: number[] = [];
+      for (let i = 0; i < w.data.length; i += 2) bytes.push(parseInt(w.data.slice(i, i + 2), 16));
+      chip.speak(bytes);
+      let loud = 0;
+      for (let f = 0; f < w.frames; f++) {
+        let peak = 0;
+        for (let i = 0; i < FRAME_SAMPLES; i++) peak = Math.max(peak, Math.abs(chip.sample()));
+        if (peak > 0.02) loud += 1;
+      }
+      expect(chip.speaking, `word ${index} stops`).toBe(false);
+      expect(w.frames, `word ${index} length`).toBeGreaterThan(8);
+      expect(loud / w.frames, `word ${index} loud`).toBeGreaterThan(0.4);
+    }
+  });
+});

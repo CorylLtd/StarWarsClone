@@ -1,5 +1,9 @@
 import { SPEECH_WORDS } from '../data/speech';
-import { BREATH, PAUSE, SPEECH_LINES, SPEECH_TIMING } from './speechLines';
+import { ORIGINAL_WORD_INDEX, PAUSE, SPEECH_LINES, SPEECH_TIMING } from './speechLines';
+
+/** The original's phrases, if scripts/extractSpeech.ts has decoded them locally (the file is git-ignored). */
+const LOCAL_SPEECH = import.meta.glob('../data/local/speech.ts', { eager: true }) as Record<string, { ORIGINAL_SPEECH: Record<number, { frames: number; data: string }> }>;
+export const ORIGINAL_SPEECH: Record<number, { frames: number; data: string }> | null = Object.values(LOCAL_SPEECH)[0]?.ORIGINAL_SPEECH ?? null;
 import { FRAME_SAMPLES, SAMPLE_RATE, TMS5220_TABLES } from './tms5220Tables';
 import { TMS5220_PROCESSOR_SOURCE } from './tms5220Processor';
 
@@ -15,6 +19,7 @@ const HISTORY_LENGTH = 64;
  */
 export class SpeechEngine {
   private node: AudioWorkletNode | null = null;
+  private gainNode: GainNode | null = null;
   private readonly ready: Promise<void>;
   /** Messages posted before the worklet was up, sent as soon as it is. */
   private pending: unknown[] = [];
@@ -24,6 +29,8 @@ export class SpeechEngine {
   private busyUntil = 0;
   private queued = 0;
   private readonly spoken: { line: string; at: number }[] = [];
+  /** Play the original's phrases when they are installed locally; false keeps this project's voices. */
+  useOriginal = ORIGINAL_SPEECH !== null;
 
   constructor(
     private readonly ctx: BaseAudioContext,
@@ -34,7 +41,8 @@ export class SpeechEngine {
     this.ready = ctx.audioWorklet.addModule(url).then(() => {
       this.node = new AudioWorkletNode(ctx, 'tms5220', { outputChannelCount: [1], processorOptions: { tables: TMS5220_TABLES } });
       const g = ctx.createGain();
-      g.gain.value = gain;
+      g.gain.value = this.gainNode?.gain.value ?? gain;
+      this.gainNode = g;
       this.node.connect(g);
       g.connect(out);
       for (const m of this.pending) this.node.port.postMessage(m);
@@ -49,6 +57,12 @@ export class SpeechEngine {
 
   whenReady(): Promise<void> {
     return this.ready;
+  }
+
+  /** Output level; may be set before the worklet is up. */
+  setGain(value: number): void {
+    if (this.gainNode) this.gainNode.gain.value = value;
+    else this.gainNode = { gain: { value } } as GainNode;
   }
 
   /** Queue a line. Returns when it will start, or null if it was dropped or unknown. */
@@ -67,7 +81,7 @@ export class SpeechEngine {
         t += SPEECH_TIMING.pause;
         continue;
       }
-      const data = SPEECH_WORDS[word === BREATH ? BREATH : word];
+      const data = this.wordData(word);
       if (!data) continue;
       this.post({ type: 'speak', at: this.sampleAt(t), data: hexBytes(data.data) });
       t += (data.frames * FRAME_SAMPLES) / SAMPLE_RATE - SPEECH_TIMING.fifoTail + SPEECH_TIMING.interWord;
@@ -78,6 +92,15 @@ export class SpeechEngine {
     this.spoken.push({ line, at: start });
     if (this.spoken.length > HISTORY_LENGTH) this.spoken.shift();
     return start;
+  }
+
+  /** A word's frames: the original's when installed and chosen, else ours. */
+  private wordData(word: string): { frames: number; data: string } | undefined {
+    if (this.useOriginal && ORIGINAL_SPEECH) {
+      const index = ORIGINAL_WORD_INDEX[word];
+      if (index !== undefined && ORIGINAL_SPEECH[index]) return ORIGINAL_SPEECH[index];
+    }
+    return SPEECH_WORDS[word];
   }
 
   /** Whether a sentence is sounding or waiting. */

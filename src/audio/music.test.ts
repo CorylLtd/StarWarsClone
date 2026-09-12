@@ -143,3 +143,34 @@ describe('the cues', () => {
     }
   });
 });
+
+describe('the driver\'s byte format', () => {
+  it('runs notes, settings, loops, calls and gosubs as the driver did', async () => {
+    const { tuneItems } = await import('./musicBytes');
+    // Tune 0: rate 60; loop twice over a C4 quarter and a key change; gosub to a C5 eighth; call tune 1 (a rest); end.
+    const image = [
+      0x80, 60, 0x8e, 2, 49, 0x40, 0x85, 2, 0x8f, 0, 0x90, 0, 20, 0x8d, 1, 0, 0, 0, 0, 0,
+      61, 0x20, 0x91, 0,
+      0, 0x20, 0, 0,
+    ];
+    const music = { image, directory: [0, 24] };
+    const items = [...tuneItems(music, 0)];
+    const notes = items.filter((i) => i.kind === 'note') as { note: number; units: number }[];
+    expect(items[0]).toEqual({ kind: 'rate', value: 60, relative: false });
+    expect(notes.map((n) => [n.note, n.units])).toEqual([[49, 32], [49, 32], [61, 16], [0, 16]]);
+    expect(items.filter((i) => i.kind === 'key')).toHaveLength(2);
+    expect(compileVoice(tuneItems(music, 0), 0).length).toBeGreaterThan(0);
+  });
+
+  it('the original\'s cues, when installed locally, run the lengths measured from the driver', async () => {
+    const local = import.meta.glob('../data/local/music.ts', { eager: true }) as Record<string, { ORIGINAL_MUSIC: import('./musicBytes').OriginalMusic }>;
+    const music = Object.values(local)[0]?.ORIGINAL_MUSIC;
+    if (!music) return;
+    const { originalCue } = await import('./musicBytes');
+    for (const [name, seconds] of Object.entries(ORIGINAL_CUE_SECONDS)) {
+      const track = compileCue(originalCue(music, name)!);
+      const ours = track.length / STEP_HZ;
+      expect(Math.abs(ours - seconds) / seconds, `${name}: ${ours.toFixed(2)}s vs ${seconds}s`).toBeLessThan(0.03);
+    }
+  });
+});

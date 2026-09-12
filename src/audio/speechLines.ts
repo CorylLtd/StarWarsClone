@@ -46,6 +46,28 @@ export const SPEECH_LINES: Record<string, SpeechLine> = {
   'GREAT SHOT KID, THAT WAS ONE IN A MILLION': { speaker: 'han', words: ['GREAT SHOT KID, THAT WAS ONE IN A MILLION'] },
 };
 
+/** The sound board's word index for each of our words (SNDSPK.MAC's sentence tables), for playing the original's phrases when installed locally. */
+export const ORIGINAL_WORD_INDEX: Record<string, number> = {
+  'USE THE FORCE, LUKE': 1,
+  REMEMBER: 2,
+  'THE FORCE IS STRONG WITH THIS ONE': 4,
+  'RED FIVE STANDING BY': 5,
+  "THIS IS RED FIVE, I'M GOING IN": 6,
+  'R2, TRY AND INCREASE THE POWER': 7,
+  "YOU'RE ALL CLEAR KID": 8,
+  'LET GO, LUKE': 9,
+  [BREATH]: 10,
+  YAHOO: 11,
+  'THE FORCE WILL BE WITH YOU': 15,
+  ALWAYS: 16,
+  'R2 NO': 17,
+  "I'M HIT BUT NOT BAD, R2 SEE WHAT YOU CAN DO WITH IT": 19,
+  "I'VE LOST R2": 20,
+  'GREAT SHOT KID, THAT WAS ONE IN A MILLION': 21,
+  "I CAN'T SHAKE HIM": 22,
+  'LUKE, TRUST ME': 23,
+};
+
 /** The board's timings, in seconds. */
 export const SPEECH_TIMING = {
   /** After a word's last byte is sent (about 60 ms of it still buffered), before the next word. */

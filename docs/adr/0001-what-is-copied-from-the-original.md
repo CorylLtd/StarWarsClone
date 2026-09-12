@@ -38,6 +38,18 @@ that only affects audio. Going less far (hand-drawn ships, scrubbed names)
 would not change the legal position of a project that announces itself as a
 Star Wars clone, and would cost the fidelity that is the whole point.
 
+## Amendment (2026-09-13): the real music and speech, locally
+
+The cabinet's music and speech can be heard without the repository
+distributing them. `scripts/extractMusic.ts` decodes the tune tables from a
+local copy of the Atari source, and `scripts/extractSpeech.ts` the speech
+phrases from a local copy of the ROM set (paths in the git-ignored
+`local.config.json`), into the git-ignored `src/data/local/`; the game plays
+those through the same driver and chip models when the files exist and this
+project's compositions and voices otherwise (`?music=ours` and `?speech=ours`
+force ours). The public source still carries only the cue points, the driver
+logic, our own cues and our own voices.
+
 ## Consequences
 
 - The README states the project is unofficial and non-commercial, with no

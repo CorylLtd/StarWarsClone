@@ -2,10 +2,11 @@ import { SoundEngine } from './audio/sound';
 import { PokeyBoard } from './audio/pokey';
 import { COMPOUND, EFFECTS } from './audio/effects';
 import { compileCue, STEP_HZ } from './audio/music';
+import { originalCue } from './audio/musicBytes';
 import { MUSIC_CUES } from './audio/musicCues';
 import { SpeechEngine } from './audio/speech';
 import { SPEECH_LINES } from './audio/speechLines';
-import { POKEY_CLOCK_HZ } from './audio/sound';
+import { ORIGINAL_MUSIC, POKEY_CLOCK_HZ } from './audio/sound';
 import { DT } from './game/config';
 import { createInitialState, defaultHighScores } from './game/state';
 import { ATTRACT } from './game/config';
@@ -110,8 +111,9 @@ if (import.meta.env.DEV) {
     return { seconds: Number(seconds.toFixed(2)), peak: Number(peak.toFixed(3)), pitchPer100ms: pitches };
   };
   // Render one music cue offline and describe it: length, peak level and the RMS level of each second.
-  (window as unknown as { __swRenderMusic: (name: string) => Promise<unknown> }).__swRenderMusic = async (name: string) => {
-    const track = compileCue(MUSIC_CUES[name]);
+  (window as unknown as { __swRenderMusic: (name: string, ours?: boolean) => Promise<unknown> }).__swRenderMusic = async (name: string, ours = false) => {
+    const source = (!ours && ORIGINAL_MUSIC ? originalCue(ORIGINAL_MUSIC, name) : null) ?? MUSIC_CUES[name];
+    const track = compileCue(source);
     const seconds = track.length / STEP_HZ + 0.2;
     const off = new OfflineAudioContext(1, Math.ceil(48000 * seconds), 48000);
     const board = new PokeyBoard(off, off.destination, POKEY_CLOCK_HZ);
@@ -139,6 +141,7 @@ if (import.meta.env.DEV) {
     if (!SPEECH_LINES[line]) return null;
     const off = new OfflineAudioContext(1, 48000 * 12, 48000);
     const speech = new SpeechEngine(off, off.destination);
+    speech.useOriginal = sound.useOriginalSpeech;
     await speech.whenReady();
     const start = speech.say(line, 0.05)!;
     await new Promise((r) => setTimeout(r, 200));
@@ -204,8 +207,12 @@ if (import.meta.env.DEV) {
 }
 
 // Open the game with ?mute to run without any audio.
-const muted = new URLSearchParams(location.search).has('mute');
+const params = new URLSearchParams(location.search);
+const muted = params.has('mute');
 sound.muted = muted;
+// The original's tables play when installed locally; ?music=ours brings this project's compositions back.
+if (params.get('music') === 'ours') sound.useOriginalMusic = false;
+if (params.get('speech') === 'ours') sound.useOriginalSpeech = false;
 if (!muted) {
   window.addEventListener('keydown', () => sound.unlock());
   window.addEventListener('pointerdown', () => sound.unlock());

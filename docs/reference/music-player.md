@@ -122,7 +122,7 @@ Lengths from simulating the driver over the tune data (voice steps ×
 | end | 13.8 s (53 quarters) | 128 | C#5-F#7 (second pass an octave up) | C#2-F#6 | C3-F#6, 35 % rests | bass A2-E3, long tied notes | hard + quick-rise; volumes 10→4 in the coda; glock on 2/3 |
 | ben | 12.7 s (32 quarters) | 84 | lead D4-G5, continuous | F#5-A#5, 50 % rests | A4-G5, 50 % rests | bass C2-G2, 50 % rests | hard on the lead, quick-rise on the rest |
 | cantina | 27.6 s (≈124 quarters) | 150 | D4-D#5, 152 notes | A3-A#4 in parallel | F3-G4 | walking bass D2-G3 in 32-unit steps | steel + ties; synth glides on and off; loops |
-| torpedo | ≈1.2 s | 60→112 then 207→255 | four voices of 48 two-unit notes, keys stepping down a semitone each note, synth on, vol 15 | | | | a special effect, not a tune |
+| torpedo | 0.44 s | 207→255 (sub-phrases at 65→112) | four voices of 48 two-unit notes, keys stepping down a semitone each note, synth on, vol 15 | | | | a special effect, not a tune |
 | test tones | | 60 | C4 scale steps with key changes | | | | diagnostics only |
 
 ## 7. What this project does with it

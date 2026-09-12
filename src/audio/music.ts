@@ -52,7 +52,7 @@ export interface MusicTrack {
 }
 
 export interface MusicCue {
-  voices: [string, string, string, string];
+  voices: [string, string, string, string] | [Iterable<Item>, Iterable<Item>, Iterable<Item>, Iterable<Item>];
 }
 
 /** Where each voice lives: voices 1 and 2 on the fourth chip, 3 and 4 on the third; each is a channel pair (low AUDF, high AUDF, AUDC of the high channel). */
@@ -97,11 +97,12 @@ export function noteDivider(note: number): number {
   return Math.max(0, Math.min(0xffff, n));
 }
 
-type Item =
+/** One thing a voice does: a note or rest, or a setting. The notation parser and the driver's byte format both produce these. */
+export type Item =
   | { kind: 'note'; note: number; units: number; tied: boolean }
   | { kind: 'rate'; value: number; relative: boolean }
   | { kind: 'vol'; value: number; relative: boolean }
-  | { kind: 'key'; value: number }
+  | { kind: 'key'; value: number; relative?: boolean }
   | { kind: 'env'; name: string }
   | { kind: 'fenv'; name: string }
   | { kind: 'synth'; on: boolean }
@@ -167,13 +168,13 @@ export function parseVoice(text: string): Item[] {
 
 const MAX_STEPS = 20000;
 
-/** Compile one voice: the driver's per-step logic, emitting writes only when a register changes. */
-export function compileVoice(text: string, voice: number): { writes: MusicWrite[]; length: number } {
-  const items = parseVoice(text);
+/** Compile one voice from notation or a stream of items: the driver's per-step logic, emitting writes only when a register changes. */
+export function compileVoice(source: string | Iterable<Item>, voice: number): { writes: MusicWrite[]; length: number } {
+  const items = typeof source === 'string' ? parseVoice(source)[Symbol.iterator]() : source[Symbol.iterator]();
+  let pending = items.next();
   const hw = VOICE_HARDWARE[voice];
   const phase = voice % 2 === 1 ? 0.5 : 0;
   const writes: MusicWrite[] = [];
-  let pc = 0;
   let odur = 0;
   let rate = 64;
   let vvol = 7;
@@ -195,8 +196,9 @@ export function compileVoice(text: string, voice: number): { writes: MusicWrite[
     odur -= rate;
     if (odur < 0) {
       let fetched = false;
-      while (!fetched && pc < items.length) {
-        const it = items[pc++];
+      while (!fetched && !pending.done) {
+        const it = pending.value;
+        pending = items.next();
         switch (it.kind) {
           case 'rate':
             rate = (it.relative ? rate + it.value : it.value) & 0xff;
@@ -206,7 +208,7 @@ export function compileVoice(text: string, voice: number): { writes: MusicWrite[
             if (vvol > 127) vvol -= 256;
             break;
           case 'key':
-            key = it.value;
+            key = it.relative ? key + it.value : it.value;
             break;
           case 'env':
             env = AMP_ENVELOPES[it.name];

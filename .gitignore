@@ -4,3 +4,5 @@ dist/
 *.log
 # Local-only settings such as the MAME ROM path. Never commit ROMs or the Atari source.
 local.config.json
+# Decoded from a local copy of the original's tables; never commit (ADR 0001).
+src/data/local/
