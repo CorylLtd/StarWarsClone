@@ -3,6 +3,8 @@ import { PokeyBoard } from './audio/pokey';
 import { COMPOUND, EFFECTS } from './audio/effects';
 import { compileCue, STEP_HZ } from './audio/music';
 import { MUSIC_CUES } from './audio/musicCues';
+import { SpeechEngine } from './audio/speech';
+import { SPEECH_LINES } from './audio/speechLines';
 import { POKEY_CLOCK_HZ } from './audio/sound';
 import { DT } from './game/config';
 import { createInitialState, defaultHighScores } from './game/state';
@@ -132,6 +134,30 @@ if (import.meta.env.DEV) {
     }
     return { seconds: Number((track.length / STEP_HZ).toFixed(2)), writes: track.writes.length, peak: Number(peak.toFixed(3)), rmsPerSecond };
   };
+  // Render one Speech Line offline and describe it: length, peak level and the RMS level of each quarter second.
+  (window as unknown as { __swRenderSpeech: (line: string) => Promise<unknown> }).__swRenderSpeech = async (line: string) => {
+    if (!SPEECH_LINES[line]) return null;
+    const off = new OfflineAudioContext(1, 48000 * 12, 48000);
+    const speech = new SpeechEngine(off, off.destination);
+    await speech.whenReady();
+    const start = speech.say(line, 0.05)!;
+    await new Promise((r) => setTimeout(r, 200));
+    const d = (await off.startRendering()).getChannelData(0);
+    let peak = 0;
+    const rms: number[] = [];
+    let lastLoud = 0;
+    for (let s = 0; s + 12000 <= d.length; s += 12000) {
+      let sum = 0;
+      for (let i = s; i < s + 12000; i++) {
+        peak = Math.max(peak, Math.abs(d[i]));
+        sum += d[i] * d[i];
+      }
+      const r = Math.sqrt(sum / 12000);
+      if (r > 0.005) lastLoud = s + 12000;
+      rms.push(Number(r.toFixed(3)));
+    }
+    return { start: Number(start.toFixed(2)), seconds: Number((lastLoud / 48000).toFixed(2)), peak: Number(peak.toFixed(3)), rmsPerQuarterSecond: rms.slice(0, Math.ceil(lastLoud / 12000) + 1) };
+  };
   // Offline self-test of the 16-bit join: a pure tone on a joined pair at the chip clock should measure clock / (2 * (N + 7)) Hz.
   (window as unknown as { __swPokeyTest16: (divider: number) => Promise<number> }).__swPokeyTest16 = async (divider: number) => {
     const off = new OfflineAudioContext(1, 48000, 48000);
@@ -196,6 +222,9 @@ function dispatch(event: GameEvent): void {
       break;
     case 'music':
       sound.playMusic(event.cue);
+      break;
+    case 'speech':
+      sound.speak(event.line);
       break;
     case 'gameOver':
       saveHighScore(state.highScore);

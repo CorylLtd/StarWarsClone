@@ -8,12 +8,14 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "speech": "node scripts/encodeSpeech.ts"
   },
   "dependencies": {
     "three": "0.186.0"
   },
   "devDependencies": {
+    "@types/node": "24.13.4",
     "@types/three": "0.186.0",
     "typescript": "7.0.2",
     "vite": "8.3.0",

@@ -14,8 +14,8 @@ for exactly what the recreation does and does not take from the original.
 
 ## Status
 
-Milestone 7 of 9: everything a player sees is in, and so are the sound
-effects and the music. The attract cycles the high-score table, the banner
+Milestone 8 of 9: everything a player sees and hears is in: the sound
+effects, the music and the speech. The attract cycles the high-score table, the banner
 with its receding logo and storyline, the flight instructions and the scoring
 page on the original's clock; a game runs the Dogfight, the Surface and the
 Trench through the Death Star's destruction and on to the next wave by the
@@ -23,8 +23,9 @@ original's rules; a qualifying score signs the table with the yoke, and the
 top three rows persist as the cabinet's NVRAM did. Every effect is the
 original sound board's own register sequence played through a model of its
 four POKEY chips, and the music cues play at the original's cue points
-through the original's music driver logic, as compositions of our own. Speech
-is still to come.
+through the original's music driver logic, as compositions of our own; the
+speech lines are spoken at the original's cue points, in system voices,
+through a model of its speech chip.
 
 ## Running it
 
@@ -46,7 +47,9 @@ builds the live game state is exposed as `window.__sw`, the sound engine as
 `window.__swSound`, the renderer as `window.__swWorld`, and
 `window.__swEnterStage(stage, wave)` jumps straight into a stage;
 `window.__swSound.playMusic(cue)` plays a cue after a click, and
-`window.__swRenderMusic(cue)` renders one offline and reports its level.
+`window.__swRenderMusic(cue)` renders one offline and reports its level;
+`window.__swSound.speak(line)` and `window.__swRenderSpeech(line)` do the
+same for a speech line.
 
 ## Audio
 
@@ -68,6 +71,15 @@ cue points, lengths, tempi and voice roles are kept (see
 first key or pointer event, because browsers refuse to start audio without a
 gesture.
 
+Speech is the arcade's words in a voice of our own. `scripts/encodeSpeech.ts`
+has macOS `say` speak each line at 8 kHz and `scripts/lpc.ts` encodes it into
+TMS5220 frames with the chip's own quantisation tables; the result is checked
+in as `src/data/speech.ts` so nothing but macOS is needed to regenerate it
+(`npm run speech`). `src/audio/tms5220Processor.ts` models the chip in an
+AudioWorklet, and `src/audio/speech.ts` keeps the sound board's sentence
+queue, pauses and the lines it dropped when busy. The speech ROMs, which hold
+the film's actors, are never read (see `docs/reference/speech.md`).
+
 ## How the code is organised
 
 ```
@@ -76,7 +88,9 @@ src/
   input/    mouse, gamepad and keyboard -> one yoke snapshot
   render/   Three.js scene that draws a GameState
   ui/       DOM overlays: screen frame, HUD, attract and game-over cards
-  audio/    Web Audio synthesis: the POKEY model, effects and music (TMS5220 speech to come)
+  audio/    Web Audio synthesis: the POKEY model, effects, music, the TMS5220 model and speech
+  data/     generated tables: vector ROM shapes, stage layouts, encoded speech
+  scripts/  offline tools: the speech encoder
   main.ts   wires everything together and runs the fixed-step frame loop
 ```
 

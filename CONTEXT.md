@@ -238,8 +238,18 @@ _Avoid_: tick, frame
 
 **Speech Line**:
 A spoken phrase played at a fixed point in play, using the arcade's words in a
-voice of our own.
+voice of our own. A line is one or more Words with pauses or breaths between.
 _Avoid_: voice clip, sample, quote
+
+**Word**:
+One phrase as the sound board's speech chip spoke it: a stream of frames from
+one command to its stop frame.
+_Avoid_: clip, sample, utterance
+
+**Speaker**:
+Whose line it is (Luke, Han, Ben or Vader), which picks the voice it is
+encoded in.
+_Avoid_: character, actor, voice
 
 **Music Cue**:
 A piece of music played at a fixed point in play or in the Attract, composed

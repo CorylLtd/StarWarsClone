@@ -2,8 +2,12 @@ import { COMPOUND, EFFECTS, type Effect } from './effects';
 import { compileCue, MUSIC_AUDCTL, MUSIC_CHIPS, STEP_HZ, type MusicTrack } from './music';
 import { MUSIC_CUES } from './musicCues';
 import { PokeyBoard, POKEY_CLOCK_HZ, type PokeyWrite } from './pokey';
+import { SpeechEngine } from './speech';
 
 export { POKEY_CLOCK_HZ };
+
+/** Level of the speech chip against the POKEYs. */
+export const SPEECH_GAIN = 1.2;
 
 /**
  * The sound engine: four modelled POKEY chips driven by the original's effect
@@ -11,11 +15,12 @@ export { POKEY_CLOCK_HZ };
  * writes; a new effect on a channel cancels what was queued there unless a
  * higher-priority effect is still playing. Music has the other two chips to
  * itself, and a new cue replaces whatever cue was playing, as the original's
- * driver did.
+ * driver did. Speech goes through its own chip model and sentence queue.
  */
 export class SoundEngine {
   private context: AudioContext | null = null;
   private board: PokeyBoard | null = null;
+  private speech: SpeechEngine | null = null;
   private master: GainNode | null = null;
   /** For each chip and channel, the priority and end time of the effect occupying it. */
   private readonly busy: { priority: number; until: number }[][] = [0, 1, 2, 3].map(() => [0, 1, 2, 3].map(() => ({ priority: 0, until: 0 })));
@@ -36,6 +41,18 @@ export class SoundEngine {
     this.master.gain.value = 0.7;
     this.master.connect(this.context.destination);
     this.board = new PokeyBoard(this.context, this.master, POKEY_CLOCK_HZ);
+    this.speech = new SpeechEngine(this.context, this.master, SPEECH_GAIN);
+  }
+
+  /** Queue a Speech Line; unknown lines are ignored, and lines the board dropped when busy are dropped here too. */
+  speak(line: string): void {
+    if (!this.speech || this.muted) return;
+    this.speech.say(line);
+  }
+
+  /** The speech queue, for the dev console. */
+  speechEngine(): SpeechEngine | null {
+    return this.speech;
   }
 
   /** Play a named effect now. Unknown names are ignored so the game can raise events before their sounds exist. */
