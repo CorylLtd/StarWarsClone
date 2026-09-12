@@ -71,7 +71,7 @@ describe('lasers versus fireballs', () => {
     const state = faceOff('tie');
     state.dogfight.aliens = [null, null, null];
     state.dogfight.liveCount = 0;
-    state.dogfight.fireballs[5] = { kind: 'live', pos: vec(6000, 0, 0), timer: 64, at: { x: 0, y: 0 }, halfDistance: 3000, impacting: false };
+    state.dogfight.fireballs[5] = { kind: 'live', mover: 'home', pos: vec(6000, 0, 0), timer: 64, at: { x: 0, y: 0 }, halfDistance: 3000, impacting: false };
     const events = runFields(state, 2, FIRE);
     expect(events.some((e) => e.type === 'laserHitFireball')).toBe(true);
     expect(state.score).toBe(SCORING.fireball);
@@ -82,7 +82,7 @@ describe('lasers versus fireballs', () => {
     const state = faceOff('tie');
     state.dogfight.aliens = [null, null, null];
     state.dogfight.liveCount = 0;
-    state.dogfight.fireballs[5] = { kind: 'live', pos: vec(6000, 0, 0), timer: 64, at: { x: 0, y: 0 }, halfDistance: 3000, impacting: false };
+    state.dogfight.fireballs[5] = { kind: 'live', mover: 'home', pos: vec(6000, 0, 0), timer: 64, at: { x: 0, y: 0 }, halfDistance: 3000, impacting: false };
     const before = state.shields;
     const events = runFrames(state, 30, IDLE);
     expect(events.some((e) => e.type === 'shieldLost')).toBe(true);

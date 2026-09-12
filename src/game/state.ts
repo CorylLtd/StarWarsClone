@@ -1,7 +1,7 @@
 import { OPTIONS } from './config';
 import { identityBasis, reversedBasis, vec } from './frame';
 import { createRng } from './random';
-import type { Dogfight, GameState, Player } from './types';
+import type { Dogfight, GameState, Player, Surface } from './types';
 
 export function createPlayer(): Player {
   return {
@@ -44,6 +44,28 @@ export function createDogfight(): Dogfight {
   };
 }
 
+export function createSurface(): Surface {
+  return {
+    frame: 0,
+    phase: 'flying',
+    pos: vec(0, 0, 0),
+    speed: 0,
+    vel: vec(0, 0, 0),
+    laps: 0,
+    bankTics: 0,
+    collisionRoll: 0,
+    transitionRoll: 0,
+    buildings: [],
+    towersLeft: 0,
+    nextTowerPoints: 0,
+    allTowersCleared: false,
+    fragments: [],
+    munge: identityBasis(),
+    dots: [],
+    gunsKilled: false,
+  };
+}
+
 export function createInitialState(seed: number, highScore: number = 0): GameState {
   return {
     mode: 'attract',
@@ -65,6 +87,7 @@ export function createInitialState(seed: number, highScore: number = 0): GameSta
     selectFrames: 0,
     player: createPlayer(),
     dogfight: createDogfight(),
+    surface: createSurface(),
     fireHeld: false,
     fireLatch: false,
     rng: createRng(seed),

@@ -148,6 +148,24 @@ _Avoid_: tower head, tower cap
 A low gun emplacement on the Surface. Worth 200 points.
 _Avoid_: bunker, gun, cannon
 
+**Maze**:
+The fixed layout of Laser Towers, Bishops and Laser Bunkers a wave's Surface
+uses; it repeats every lap.
+_Avoid_: map, level layout, tower field
+
+**Lap**:
+One pass over the Surface's repeating Maze. Buildings awaken by lap, and the
+Surface ends after the fifth.
+_Avoid_: loop, cycle, wrap
+
+**Bishop**:
+A Laser Tower that fires only diagonal shots.
+_Avoid_: diagonal tower
+
+**Hat**:
+The white section at the top of a Laser Tower: the Tower Top the player shoots.
+_Avoid_: cap, cannon, head
+
 **Trench Turret**:
 A gun mounted in the Trench walls. Worth 100 points.
 _Avoid_: turret, wall gun, trench gun

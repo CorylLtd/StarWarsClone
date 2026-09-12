@@ -14,12 +14,12 @@ for exactly what the recreation does and does not take from the original.
 
 ## Status
 
-Milestone 2 of 9: the Dogfight is playable. Pull the trigger, pick a Death
-Star, and fight the TIE Fighters and Darth's Ship with the original's own
-choreography, fire rates, hit tests, shield rules and timings, drawn with
-shapes traced from the vector ROM through a camera calibrated to the
-arcade's projection. The Surface and Trench stages are stubs, and there is no
-sound yet.
+Milestone 3 of 9: the Dogfight and the Surface are playable. Pull the
+trigger, pick a Death Star, fight the TIE Fighters and Darth's Ship, then fly
+the Death Star's surface among the laser towers and bunkers of the original's
+mazes, with its yoke response, distance-scaled drawing, gun rules, crash
+rules, tower-top scoring and the rolling descent into the trench. The Trench
+stage is a stub, and there is no sound yet.
 
 ## Running it
 

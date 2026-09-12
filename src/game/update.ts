@@ -1,6 +1,7 @@
 import { FIELDS_PER_FRAME, OPTIONS, SCORING, SELECT, SHIELDS, TIMING } from './config';
 import { stepCursor } from './cursor';
 import { enterDogfight, stepDogfightFrame, stepDyingFrame } from './dogfight';
+import { enterSurface, stepSurfaceFrame } from './surface';
 import { reversedBasis } from './frame';
 import { createDogfight, createPlayer } from './state';
 import type { GameState, Input, StageKind } from './types';
@@ -110,6 +111,7 @@ export function enterStage(state: GameState, stage: StageKind): void {
   state.stage = stage;
   state.stageFrames = 0;
   if (stage === 'dogfight') enterDogfight(state);
+  if (stage === 'surface') enterSurface(state);
   state.events.push({ type: 'stageStarted', stage, wave: state.wave });
 }
 
@@ -127,10 +129,16 @@ function stepPlaying(state: GameState, input: Input): void {
       if (done) enterStage(state, state.wave === 0 ? 'trench' : 'surface');
       return;
     }
-    case 'surface':
-      // Stub: the Surface milestone replaces this.
-      if (state.stageFrames >= 60) enterStage(state, 'trench');
+    case 'surface': {
+      const done = stepSurfaceFrame(state, input);
+      if (state.shields < 0) {
+        setMode(state, 'dying');
+        state.events.push({ type: 'playerDied' });
+        return;
+      }
+      if (done) enterStage(state, 'trench');
       return;
+    }
     case 'trench':
       // Stub: the Trench milestone replaces this.
       if (state.stageFrames >= 60) completeWave(state);

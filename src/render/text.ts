@@ -12,16 +12,26 @@ export function drawText(lines: LineSet, text: string, x: number, y: number, col
   }
 }
 
-/** A number with thousands commas the way the original drew them: commas advance only 4 units. */
-export function drawNumber(lines: LineSet, value: number, x: number, y: number, color: THREE.Color, minDigits = 1): void {
-  const digits = String(Math.max(0, Math.floor(value))).padStart(minDigits, '0');
+/**
+ * A number in a fixed-width field the way the original drew them: leading
+ * zeros are suppressed but still advance the pen (down to `minShown` digits),
+ * and a thousands comma, advancing only 4 units, appears once a significant
+ * digit has been drawn.
+ */
+export function drawNumber(lines: LineSet, value: number, x: number, y: number, color: THREE.Color, field = 1, minShown = 1): void {
+  const digits = String(Math.max(0, Math.floor(value))).padStart(field, '0');
   let pen = x;
+  let shown = false;
   for (let i = 0; i < digits.length; i++) {
-    const glyph = FONT[digits[i]];
-    if (glyph) for (const stroke of glyph) lines.polyline(stroke, color, pen, y);
-    pen += FONT_ADVANCE;
     const remaining = digits.length - 1 - i;
-    if (remaining > 0 && remaining % 3 === 0) {
+    const significant = digits[i] !== '0' || shown || remaining < minShown;
+    if (significant) {
+      shown = true;
+      const glyph = FONT[digits[i]];
+      if (glyph) for (const stroke of glyph) lines.polyline(stroke, color, pen, y);
+    }
+    pen += FONT_ADVANCE;
+    if (remaining > 0 && remaining % 3 === 0 && shown) {
       lines.polyline([[-4, -6], [-2, 4]], color, pen, y);
       pen += 4;
     }

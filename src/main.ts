@@ -2,7 +2,8 @@ import { SoundEngine } from './audio/sound';
 import { DT } from './game/config';
 import { createInitialState } from './game/state';
 import type { GameEvent } from './game/types';
-import { step } from './game/update';
+import { enterStage, step } from './game/update';
+import type { StageKind } from './game/types';
 import { YokeInput } from './input/yoke';
 import { WorldRenderer } from './render/renderer';
 import { ScreenFrame } from './ui/screenFrame';
@@ -36,9 +37,13 @@ new ScreenFrame(window, screen, () => world.resize());
 const sound = new SoundEngine();
 
 if (import.meta.env.DEV) {
-  const dev = window as unknown as { __sw: typeof state; __swSound: typeof sound };
+  const dev = window as unknown as { __sw: typeof state; __swSound: typeof sound; __swEnterStage: (stage: StageKind, wave?: number) => void };
   dev.__sw = state;
   dev.__swSound = sound;
+  dev.__swEnterStage = (stage, wave) => {
+    if (wave !== undefined) state.wave = wave;
+    enterStage(state, stage);
+  };
 }
 
 // Open the game with ?mute to run without any audio.

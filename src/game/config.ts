@@ -103,6 +103,79 @@ export const DOGFIGHT = {
   zoomEnd: 3 * 128 + 16,
 };
 
+export const SURFACE = {
+  /** The maze repeats every this many universe units forward; the lap counter ticks when 16-bit X overflows. */
+  mapWrap: 0x8000,
+  /** Start position and the altitude limits applied after every move. */
+  startX: 128,
+  startAltitude: 8192,
+  minAltitude: 512,
+  maxAltitude: 7168,
+  /** Forward speed: start, increase per frame, and cap. */
+  speedStart: 256,
+  speedRamp: 1,
+  speedMax: 1024,
+  /** Lateral and vertical velocity per unit of cursor pot per unit of speed. */
+  lateralGain: 1 / 128,
+  verticalGain: 1 / 256,
+  /** Bank: tics per pot unit, tics per unit of collision roll, slew per frame normally and while a collision roll is active. */
+  bankTicsPerPot: 2,
+  bankTicsPerRoll: 32,
+  bankSlewTics: 16,
+  bankSlewTicsHit: 80,
+  /** Buildings are drawn when their forward distance is in this range (real units) and within the 45 degree cone. */
+  minDistance: 512,
+  maxDistance: 30720,
+  /** Real sizes: tower radius, height and hat bottom; bunker radius and height. */
+  towerRadius: 960,
+  towerHeight: 13920,
+  hatBottom: 12480,
+  bunkerRadius: 1680,
+  bunkerHeight: 1440,
+  /** Laser hit: sight fudge in screen units. */
+  hitPad: 10,
+  /** Collision: real distance at or below 1024 + 2 * speed for towers, 2048 + 2 * speed for bunkers (flying below their height). */
+  towerCrashBase: 1024,
+  bunkerCrashBase: 2048,
+  towerCrashRoll: 32,
+  bunkerCrashRoll: 19,
+  /** The lap after which guns fall silent and off-screen buildings are switched off; the stage ends when X comes back to zero. */
+  killAtLap: 5,
+  /** Tower hat scoring: first hat, and the increase per hat. */
+  towerPointsStart: 200,
+  towerPointsStep: 200,
+  allTowersBonus: 50000,
+  /** Fragments: frames alive, gravity per frame, friction per frame, and spawn heights. */
+  fragmentFrames: 32,
+  fragmentGravity: 200,
+  fragmentFriction: 1 / 32,
+  towerFragmentHeight: 14400,
+  bunkerFragmentHeight: 720,
+  /** Ground dots: count and respawn window ahead of the player. */
+  dotCount: 50,
+  dotAheadMin: 0x7000,
+  dotAheadMax: 0x7fff,
+  /** Music cue: the Rebel theme after this many game frames. */
+  rebelThemeFrame: 224,
+  /** Ground guns: usable gun slots by hardness; tower shots close at this speed and live this long. */
+  gunSlotsByHardness: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6],
+  shotSpeed: 256,
+  shotFrames: 112,
+  /** Tower gun arming: the top and hat heights, real units, scaled by distance. */
+  towerTopForArming: 6960 * 2,
+  hatForArming: 720 * 2,
+  /** Ground shots impact within max(speed, 512) + 272 real units. */
+  impactPad: 272,
+  /** The trench transition: two 17-frame halves, roll per frame, descent rates and target depths. */
+  transitionFrames: 17,
+  transitionRollDeg: 10.55,
+  transitionDropTo: 896,
+  transitionDropRate: 384,
+  trenchDropTo: -3328,
+  trenchDropRate: 256,
+  transitionSpeed: 768,
+};
+
 export const FIREBALL = {
   lifeFrames: 64,
   /** Distance multiplier per frame: it homes exponentially on the eye. */

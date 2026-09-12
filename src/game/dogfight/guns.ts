@@ -13,6 +13,7 @@ export function freeGunSlots(state: GameState, usable: number): number {
 export function fireFireball(state: GameState, from: Alien, slot: number, gun: number): void {
   const fb: Fireball = {
     kind: 'live',
+    mover: 'home',
     pos: { ...from.pos },
     timer: FIREBALL.lifeFrames,
     at: { x: 0, y: 0 },
@@ -35,7 +36,7 @@ export function stepFireballs(state: GameState): void {
     const fb = g[i];
     if (!fb) continue;
     fb.timer -= 1;
-    if (fb.kind === 'live') {
+    if (fb.kind === 'live' && fb.mover === 'home') {
       fb.pos.x = Math.round(fb.pos.x * FIREBALL.homing);
       fb.pos.y = Math.round(fb.pos.y * FIREBALL.homing);
       fb.pos.z = Math.round(fb.pos.z * FIREBALL.homing);

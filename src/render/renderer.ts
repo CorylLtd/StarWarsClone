@@ -40,6 +40,7 @@ import { alienGlowColor, explosionColor, FLASH_CYCLE, gaugeColorName, vgColor } 
 import { LineMaterials, linesFromEdges } from './lines';
 import { LineSet } from './lineSet';
 import { modelEdges, placeFromOriginal } from './models';
+import { drawSurface, GROUND_DOT_COLOR } from './surfaceView';
 import { drawNumber, drawText, textWidth } from './text';
 
 const MSAA_SAMPLES = 4;
@@ -79,6 +80,10 @@ export class WorldRenderer {
   private readonly stars: THREE.Points;
   private readonly starPositions: Float32Array;
   private readonly flash: THREE.Mesh;
+  /** Buildings and fragments of the surface, rebuilt every frame in camera-relative coordinates. */
+  private readonly ground: LineSet;
+  private readonly groundDots: THREE.Points;
+  private readonly groundDotPositions: Float32Array;
   private frame = 0;
 
   constructor(private readonly container: HTMLElement) {
@@ -118,6 +123,15 @@ export class WorldRenderer {
 
     this.flat = new LineSet(2048, width, height);
     this.overlay.add(this.flat.mesh);
+    this.ground = new LineSet(1024, width, height);
+    this.scene.add(this.ground.mesh);
+    this.groundDotPositions = new Float32Array(64 * 3);
+    const dotGeom = new THREE.BufferGeometry();
+    dotGeom.setAttribute('position', new THREE.BufferAttribute(this.groundDotPositions, 3));
+    this.groundDots = new THREE.Points(dotGeom, new THREE.PointsMaterial({ color: GROUND_DOT_COLOR, size: 2.5, sizeAttenuation: false }));
+    this.groundDots.frustumCulled = false;
+    this.groundDots.visible = false;
+    this.scene.add(this.groundDots);
 
     this.starPositions = new Float32Array(64 * 3);
     const starGeom = new THREE.BufferGeometry();
@@ -167,6 +181,7 @@ export class WorldRenderer {
     this.composer.setSize(width, height);
     this.materials.resize(width, height);
     this.flat.resize(width, height);
+    this.ground.resize(width, height);
     this.bloom.setSize(width, height);
   }
 
@@ -176,21 +191,34 @@ export class WorldRenderer {
     this.frame += 1;
     const p = state.player;
     this.camera.setBasis(p.basis);
-    const inSpace = state.mode === 'playing' || state.mode === 'dying';
+    const playing = state.mode === 'playing' || state.mode === 'dying';
+    const onSurface = playing && state.stage === 'surface';
+    const inSpace = playing && state.stage !== 'surface';
 
     this.drawAliens(state, inSpace);
     this.drawPieces(state, inSpace);
     this.drawStars(state, inSpace);
+    this.ground.begin();
+    if (onSurface) {
+      const n = drawSurface(state, this.ground, this.groundDotPositions);
+      this.groundDots.geometry.setDrawRange(0, n);
+      (this.groundDots.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+      this.groundDots.visible = n > 0;
+    } else {
+      this.groundDots.visible = false;
+    }
+    this.ground.end();
 
     const f = this.flat;
     f.begin();
-    if (inSpace) {
-      this.drawDeathStar(state);
+    if (playing) {
+      if (inSpace) this.drawDeathStar(state);
       this.drawFireballs(state);
       this.drawLasers(state);
       this.drawCockpit(state);
       if (state.mode === 'playing') this.drawCursor(state);
       this.drawHud(state);
+      if (onSurface) this.drawSurfaceMessages(state);
       if (state.mode === 'dying') this.drawGameOverGrowing(state);
     } else if (state.mode === 'select') {
       this.drawSelect(state);
@@ -200,7 +228,7 @@ export class WorldRenderer {
       this.drawAttract(state);
     }
     f.end();
-    this.flash.visible = inSpace && p.flashFrames > 0 && p.flashFrames % 4 !== 0;
+    this.flash.visible = playing && p.flashFrames > 0 && p.flashFrames % 4 !== 0;
 
     this.renderer.clear();
     this.composer.render();
@@ -360,10 +388,10 @@ export class WorldRenderer {
     const green = vgColor('GRN');
     drawText(f, HUD_TEXT.scoreLabel.text, HUD_TEXT.scoreLabel.x, HUD_TEXT.scoreLabel.y, red);
     drawText(f, HUD_TEXT.waveLabel.text, HUD_TEXT.waveLabel.x, HUD_TEXT.waveLabel.y, red);
-    drawNumber(f, state.score, HUD_TEXT.scoreDigits.x, HUD_TEXT.scoreDigits.y, green, 2);
+    drawNumber(f, state.score, HUD_TEXT.scoreDigits.x, HUD_TEXT.scoreDigits.y, green, 8, 2);
     drawNumber(f, state.mode === 'select' ? 0 : state.wave + 1, HUD_TEXT.waveNumber.x, HUD_TEXT.waveNumber.y, green, 1);
     if (state.lastScoreFade > 32) {
-      drawNumber(f, state.lastScore, HUD_TEXT.lastScore.x, HUD_TEXT.lastScore.y, vgColor('YLW', state.lastScoreFade / 2), 1);
+      drawNumber(f, state.lastScore, HUD_TEXT.lastScore.x, HUD_TEXT.lastScore.y, vgColor('YLW', state.lastScoreFade / 2), 6, 1);
     }
     if (state.mode !== 'playing' && state.mode !== 'dying') return;
     // Shield gauge.
@@ -387,6 +415,27 @@ export class WorldRenderer {
       const text = shoot ? 'SHOOT FIREBALLS' : 'SHOOT TIE FIGHTERS';
       drawText(f, text, -textWidth(text) / 2, VG.limitTop - 24, shoot ? vgColor('WHT') : red);
     }
+  }
+
+  /** The tower messages: points for the next tower, the towers left, and the cleared line. */
+  private drawSurfaceMessages(state: GameState): void {
+    const f = this.flat;
+    const s = state.surface;
+    const red = vgColor('RED');
+    const green = vgColor('GRN');
+    if (state.wave < 1) return;
+    if (s.allTowersCleared) {
+      drawText(f, 'CLEARED ALL LASER TOWERS', -284, 384, vgColor(FLASH_CYCLE[this.frame % 7], 0x80));
+    } else if (s.towersLeft > 0) {
+      if ((Math.floor(s.frame) & 0x30) !== 0) {
+        drawText(f, 'POINTS NEXT TOWER', -128, 384, red);
+        drawNumber(f, s.nextTowerPoints, -304, 384, green, 5, 1);
+      }
+    } else {
+      drawText(f, '50,000 FOR SHOOTING ALL TOWERS', -356, 384, red);
+    }
+    drawText(f, 'TOWERS', 314, 444, red);
+    drawNumber(f, s.towersLeft, 360, 408, green, 2, 1);
   }
 
   private drawGameOverGrowing(state: GameState): void {
@@ -428,7 +477,7 @@ export class WorldRenderer {
     const green = vgColor('GRN');
     drawText(f, HUD_TEXT.scoreLabel.text, HUD_TEXT.scoreLabel.x, HUD_TEXT.scoreLabel.y, red);
     drawText(f, HUD_TEXT.waveLabel.text, HUD_TEXT.waveLabel.x, HUD_TEXT.waveLabel.y, red);
-    drawNumber(f, 0, HUD_TEXT.scoreDigits.x, HUD_TEXT.scoreDigits.y, green, 2);
+    drawNumber(f, 0, HUD_TEXT.scoreDigits.x, HUD_TEXT.scoreDigits.y, green, 8, 2);
     drawText(f, '0', HUD_TEXT.waveNumber.x, HUD_TEXT.waveNumber.y, green);
     if (state.mode === 'gameOver') {
       center('GAME OVER', 528, vgColor('TRQ'));

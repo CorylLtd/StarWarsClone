@@ -74,9 +74,13 @@ export interface ScriptState {
 
 export type FireballKind = 'live' | 'hurt' | 'glow';
 
+/** How a shot moves: homing on the eye (space), a straight tower shot, or a rising bunker shot. */
+export type FireballMover = 'home' | 'towerForward' | 'towerLeft' | 'towerRight' | 'bunkerLeft' | 'bunkerRight';
+
 export interface Fireball {
   kind: FireballKind;
-  /** Position relative to the player, universe axes. */
+  mover: FireballMover;
+  /** Position relative to the player (space) or in universe coordinates (ground), universe axes. */
   pos: Vec;
   /** Frames left. */
   timer: number;
@@ -150,6 +154,65 @@ export interface Dogfight {
   deathStarDir: Vec;
 }
 
+export type BuildingType = 'tower' | 'bishop' | 'bunker';
+
+export interface Building {
+  type: BuildingType;
+  /** Map position: forward along X (within one lap), lateral along Y. */
+  pos: Vec;
+  /** Lap count at which it awakens. */
+  sequence: number;
+  /** A tower whose hat has been shot, or a bunker that has been destroyed. */
+  damaged: boolean;
+  /** Switched off for good on the final lap once out of sight. */
+  killed: boolean;
+  /** Real forward distance and lateral offset from the last view, if in sight. */
+  seen: { distance: number; lateral: number } | null;
+  /** Frames left of the collision flash. */
+  flash: number;
+  /** Tower gun: armed when its top was seen below the player's altitude; fires once per lap. */
+  armed: boolean;
+  firedThisLap: boolean;
+}
+
+export interface GroundFragment {
+  shape: 'towerLeft' | 'towerCentre' | 'towerRight' | 'bunkerLeft' | 'bunkerCentre' | 'bunkerRight';
+  pos: Vec;
+  vel: Vec;
+  timer: number;
+}
+
+export interface Surface {
+  /** Game frames since the stage began. */
+  frame: number;
+  phase: 'flying' | 'dropping' | 'descending';
+  /** Player universe position: x forward as a signed 16-bit value, y right, z altitude. */
+  pos: Vec;
+  /** Forward speed, universe units per frame. */
+  speed: number;
+  /** Lateral and vertical velocity from the yoke. */
+  vel: Vec;
+  /** Times the 16-bit forward position has overflowed: the awakening sequence. */
+  laps: number;
+  /** Bank of the view in tics (0.064 degrees), and the collision roll kick that decays by one per frame. */
+  bankTics: number;
+  collisionRoll: number;
+  /** Extra roll accumulated during the trench transition, radians. */
+  transitionRoll: number;
+  buildings: Building[];
+  /** Towers whose hats are still up. */
+  towersLeft: number;
+  /** Points the next tower hat is worth. */
+  nextTowerPoints: number;
+  allTowersCleared: boolean;
+  fragments: GroundFragment[];
+  munge: Basis;
+  /** Universe positions of the green ground dots. */
+  dots: Vec[];
+  /** Guns are silenced after this many wraps. */
+  gunsKilled: boolean;
+}
+
 export type GameEvent =
   | { type: 'gameStarted' }
   | { type: 'waveSelected'; wave: number }
@@ -158,6 +221,11 @@ export type GameEvent =
   | { type: 'laserFired' }
   | { type: 'laserHitAlien'; kind: AlienKind; destroyed: boolean }
   | { type: 'laserHitFireball' }
+  | { type: 'towerTopHit'; points: number }
+  | { type: 'bunkerHit' }
+  | { type: 'laserSplash' }
+  | { type: 'allTowersCleared' }
+  | { type: 'collision'; with: BuildingType }
   | { type: 'alienFired' }
   | { type: 'shieldHit' }
   | { type: 'shieldLost'; remaining: number }
@@ -197,6 +265,7 @@ export interface GameState {
   selectFrames: number;
   player: Player;
   dogfight: Dogfight;
+  surface: Surface;
   fireHeld: boolean;
   /** A fire press seen on any field since the last game frame, so no press falls between frames. */
   fireLatch: boolean;
