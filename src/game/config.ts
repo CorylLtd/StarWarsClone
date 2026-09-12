@@ -176,6 +176,85 @@ export const SURFACE = {
   transitionSpeed: 768,
 };
 
+export const TRENCH = {
+  /** Walls, floor and the player's clamps, universe units. */
+  wallY: 1024,
+  floorZ: -4096,
+  topZ: 0,
+  playerMaxY: 511,
+  playerMinZ: -3583,
+  playerMaxZ: -257,
+  /** Constant forward speed and the yoke gains. */
+  speed: 768,
+  lateralGain: 1 / 256,
+  verticalGain: 1 / 128,
+  /** Starting altitude from the surface, and after a miss or from space (clamped to the top band). */
+  entryFromSurfaceZ: -3328,
+  entryFromSpaceZ: 0,
+  /** Panel slots: 2048 units each, sixteen per ring; four bands per wall with these centres. */
+  slotLength: 2048,
+  ringSlots: 16,
+  bandCentres: [-512, -1536, -2560, -3584],
+  bandHalfHeight: 512,
+  /** Rows are generated while their end lies within this of the near row; drawn up to this far. */
+  generateAhead: 24576,
+  drawAhead: 28672,
+  /** Catwalk collision: only while the player is within the first this-many units of the slot. */
+  catwalkHitDepth: 1024,
+  catwalkQuickGlowFrames: 8,
+  /** Wall guns: fire window and probability by hardness, usable slots by hardness. */
+  gunWindow: [
+    { mask: 15, prob: 128 },
+    { mask: 15, prob: 96 },
+    { mask: 15, prob: 64 },
+    { mask: 15, prob: 32 },
+    { mask: 7, prob: 96 },
+    { mask: 7, prob: 32 },
+    { mask: 3, prob: 96 },
+    { mask: 3, prob: 32 },
+  ],
+  gunSlotsByHardness: [1, 1, 2, 2, 3, 3, 3, 4],
+  /** Guns fire at a player above them by less than this at full chance, by up to twice this rarely. */
+  gunAboveNear: 1024,
+  gunAboveFar: 2048,
+  shotFrames: 64,
+  shotStartY: 896,
+  /** Ground shots hit within the speed plus this. */
+  impactPad: 272,
+  /** Laser ray: far point ahead and the cursor scale per pot unit; wall hit tolerances. */
+  rayAhead: 28672,
+  rayPerPot: 7,
+  laserRadius: 64,
+  /** The port: sits this far before the end wall; the torpedo triggers within this of it. */
+  portToEnd: 4096,
+  portHitRadius: 512,
+  portDrawAhead: 28672,
+  /** Torpedo speed added to the player's, and its lateral offset. */
+  torpedoSpeed: 768,
+  torpedoOffsetY: 128,
+  /** End-of-trench test: the end wall within this. */
+  endReach: 2048,
+  /** The Force bonus by displayed wave 1..5+. */
+  forceBonus: [5000, 10000, 25000, 50000, 100000],
+  /** Catwalk depth cue: colours cycle, brightness from this down by 8 per catwalk to the floor value. */
+  catwalkColours: ['YLW', 'TRQ', 'PRP'],
+  catwalkLumStart: 0x88,
+  catwalkLumStep: 8,
+  catwalkLumMin: 0x40,
+  /** Music and speech cues in 16-frame pseudo-seconds. */
+  pseudoSecondFrames: 16,
+  /** Death Star explosion: the receding scale in masked units (binary * 128 + linear), from half size to a sixteenth; the step starts at 10 per frame and drops by one every 16 frames. */
+  dx1ScaleStart: 3 * 128 + 4,
+  dx1ScaleEnd: 6 * 128,
+  dx1StepStart: 10 * 16,
+  dx3Phase0Frames: 31,
+  dx3Phase1Frames: 31,
+  dx3Phase2Frames: 27,
+  dx3Phase3Frames: 30,
+  /** Next-wave accounting runs on a 16-frame pseudo-second clock from 4 down to -2. */
+  nextStartTim: 4,
+};
+
 export const FIREBALL = {
   lifeFrames: 64,
   /** Distance multiplier per frame: it homes exponentially on the eye. */

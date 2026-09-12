@@ -41,6 +41,7 @@ import { LineMaterials, linesFromEdges } from './lines';
 import { LineSet } from './lineSet';
 import { modelEdges, placeFromOriginal } from './models';
 import { drawSurface, GROUND_DOT_COLOR } from './surfaceView';
+import { drawDeathStarEnd, drawTorpedo, drawTrench, drawTrenchMessages } from './trenchView';
 import { drawNumber, drawText, textWidth } from './text';
 
 const MSAA_SAMPLES = 4;
@@ -193,11 +194,13 @@ export class WorldRenderer {
     this.camera.setBasis(p.basis);
     const playing = state.mode === 'playing' || state.mode === 'dying';
     const onSurface = playing && state.stage === 'surface';
-    const inSpace = playing && state.stage !== 'surface';
+    const inTrench = playing && state.stage === 'trench' && state.trench.phase === 'flying';
+    const afterTrench = playing && state.stage === 'trench' && state.trench.phase !== 'flying';
+    const inSpace = playing && state.stage === 'dogfight';
 
     this.drawAliens(state, inSpace);
     this.drawPieces(state, inSpace);
-    this.drawStars(state, inSpace);
+    this.drawStars(state, inSpace || (afterTrench && state.trench.phase === 'next'));
     this.ground.begin();
     if (onSurface) {
       const n = drawSurface(state, this.ground, this.groundDotPositions);
@@ -207,18 +210,29 @@ export class WorldRenderer {
     } else {
       this.groundDots.visible = false;
     }
+    if (inTrench) drawTrench(state, this.ground, this.frame);
     this.ground.end();
 
     const f = this.flat;
     f.begin();
     if (playing) {
       if (inSpace) this.drawDeathStar(state);
-      this.drawFireballs(state);
-      this.drawLasers(state);
-      this.drawCockpit(state);
-      if (state.mode === 'playing') this.drawCursor(state);
+      if (!afterTrench) {
+        this.drawFireballs(state);
+        this.drawLasers(state);
+        this.drawCockpit(state);
+        if (state.mode === 'playing') this.drawCursor(state);
+      }
       this.drawHud(state);
       if (onSurface) this.drawSurfaceMessages(state);
+      if (inTrench) {
+        drawTorpedo(state, this.flat, this.frame);
+        drawTrenchMessages(state, this.flat, this.frame);
+      }
+      if (afterTrench) {
+        drawDeathStarEnd(state, this.flat, this.frame);
+        if (state.trench.force === 1 && state.trench.phase === 'explosion1') drawTrenchMessages(state, this.flat, this.frame);
+      }
       if (state.mode === 'dying') this.drawGameOverGrowing(state);
     } else if (state.mode === 'select') {
       this.drawSelect(state);
@@ -410,7 +424,7 @@ export class WorldRenderer {
       drawText(f, String(shields), GAUGE_DIGIT.x, GAUGE_DIGIT.y, color);
     }
     // First-wave hints, alternating every 16 frames for the first 100 frames.
-    if (state.firstWave && state.wave === 0 && state.dogfight.frame < 100 && state.dogfight.phase === 'fight') {
+    if (state.stage === 'dogfight' && state.firstWave && state.wave === 0 && state.dogfight.frame < 100 && state.dogfight.phase === 'fight') {
       const shoot = Math.floor(state.dogfight.frame / 16) % 2 === 0;
       const text = shoot ? 'SHOOT FIREBALLS' : 'SHOOT TIE FIGHTERS';
       drawText(f, text, -textWidth(text) / 2, VG.limitTop - 24, shoot ? vgColor('WHT') : red);

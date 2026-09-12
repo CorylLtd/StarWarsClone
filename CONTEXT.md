@@ -171,8 +171,34 @@ A gun mounted in the Trench walls. Worth 100 points.
 _Avoid_: turret, wall gun, trench gun
 
 **Catwalk**:
-A barrier spanning the Trench. Striking one costs a Deflector Shield.
-_Avoid_: barrier, bridge, girder, obstacle
+A barrier reaching from one Trench wall to the middle at one Band. Flying
+into it on its side of the Trench costs a Deflector Shield.
+_Avoid_: barrier, bridge, girder, obstacle, force field
+
+**Pie**:
+The sequence of Wedges that makes one wave's Trench; fixed for the first
+eleven waves, assembled at random after.
+_Avoid_: trench layout, course
+
+**Wedge**:
+A run of Trench rows with a set pattern of panels, catwalks and guns on each
+wall.
+_Avoid_: section, chunk
+
+**Band**:
+One of the four heights on a Trench wall where a panel, Catwalk or Trench
+Turret can sit.
+_Avoid_: level, row, lane
+
+**Torpedo**:
+The pair of shots that dive into the Exhaust Port once a Laser aimed at the
+floor lands on it.
+_Avoid_: proton torpedo, missile, bomb
+
+**The Force**:
+The bonus for firing no Lasers in the Trench until the Exhaust Port row is
+laid out.
+_Avoid_: force bonus, no-fire bonus
 
 **Exhaust Port**:
 The target at the end of the Trench. Hitting it destroys the Death Star and is

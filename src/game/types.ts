@@ -75,7 +75,7 @@ export interface ScriptState {
 export type FireballKind = 'live' | 'hurt' | 'glow';
 
 /** How a shot moves: homing on the eye (space), a straight tower shot, or a rising bunker shot. */
-export type FireballMover = 'home' | 'towerForward' | 'towerLeft' | 'towerRight' | 'bunkerLeft' | 'bunkerRight';
+export type FireballMover = 'home' | 'towerForward' | 'towerLeft' | 'towerRight' | 'bunkerLeft' | 'bunkerRight' | 'wall';
 
 export interface Fireball {
   kind: FireballKind;
@@ -213,6 +213,67 @@ export interface Surface {
   gunsKilled: boolean;
 }
 
+/** A trench panel row as generated: which codes sit in each band of each wall. */
+export interface TrenchSlot {
+  /** Codes top to bottom: 0 empty, 1 panel, 2 catwalk, 3 gun; a destroyed panel or turret reads 0. */
+  left: number[];
+  right: number[];
+  /** Depth-cue colour index and brightness for a catwalk in this slot. */
+  catwalkCue: number;
+  catwalkLum: number;
+  /** Frames the catwalk shows as struck. */
+  struck: number;
+}
+
+export interface Torpedo {
+  pos: Vec;
+  live: boolean;
+}
+
+export interface Trench {
+  phase: 'flying' | 'explosion1' | 'explosion3' | 'next';
+  frame: number;
+  /** Player position: x along the trench, y lateral, z vertical. */
+  pos: Vec;
+  vel: Vec;
+  /** The wedge sequence for this wave and the generator's position in it. */
+  pie: string[];
+  wedgeIndex: number;
+  rowIndex: number;
+  /** X where the next row will be generated, and the X of the nearest generated row. */
+  farX: number;
+  nearX: number;
+  /** Row boundaries generated so far, for the wall verticals. */
+  rowStarts: number[];
+  /** The sixteen-slot rings of panel codes, indexed by (x >> 11) & 15. */
+  slots: TrenchSlot[];
+  /** Exhaust port X and end wall X once generated. */
+  portX: number | null;
+  endX: number | null;
+  /** The Force: 0 still trying, -1 fired, 1 earned. */
+  force: number;
+  forceBonus: number;
+  torpedo: Torpedo | null;
+  torpedoFired: boolean;
+  /** Passes through this trench: 0 first, 1 and up repeats after a miss. */
+  repeat: number;
+  /** Frames of the "exhaust port missed" message. */
+  missedFrames: number;
+  /** Depth cue index assigned to the next catwalk generated, and the count already passed by the player. */
+  cueIndex: number;
+  cueIndexPassed: number;
+  /** Explosion bookkeeping: scale step for the receding Death Star and the burst phase and count. */
+  dxScale: number;
+  dxStep: number;
+  burstPhase: number;
+  burstCount: number;
+  /** Next-wave accounting pseudo-second counter. */
+  nextTim: number;
+  shieldsAdded: number;
+  /** Slot the player is in, for leaving detection. */
+  lastSlot: number;
+}
+
 export type GameEvent =
   | { type: 'gameStarted' }
   | { type: 'waveSelected'; wave: number }
@@ -226,6 +287,13 @@ export type GameEvent =
   | { type: 'laserSplash' }
   | { type: 'allTowersCleared' }
   | { type: 'collision'; with: BuildingType }
+  | { type: 'catwalkHit' }
+  | { type: 'turretHit' }
+  | { type: 'panelHit' }
+  | { type: 'torpedoFired' }
+  | { type: 'forceBonus'; points: number }
+  | { type: 'portMissed' }
+  | { type: 'deathStarDestroyed' }
   | { type: 'alienFired' }
   | { type: 'shieldHit' }
   | { type: 'shieldLost'; remaining: number }
@@ -266,6 +334,7 @@ export interface GameState {
   player: Player;
   dogfight: Dogfight;
   surface: Surface;
+  trench: Trench;
   fireHeld: boolean;
   /** A fire press seen on any field since the last game frame, so no press falls between frames. */
   fireLatch: boolean;

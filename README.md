@@ -14,12 +14,12 @@ for exactly what the recreation does and does not take from the original.
 
 ## Status
 
-Milestone 3 of 9: the Dogfight and the Surface are playable. Pull the
-trigger, pick a Death Star, fight the TIE Fighters and Darth's Ship, then fly
-the Death Star's surface among the laser towers and bunkers of the original's
-mazes, with its yoke response, distance-scaled drawing, gun rules, crash
-rules, tower-top scoring and the rolling descent into the trench. The Trench
-stage is a stub, and there is no sound yet.
+Milestone 4 of 9: the whole wave is playable. Pull the trigger, pick a Death
+Star, fight the TIE Fighters and Darth's Ship, fly the surface among the
+laser towers and bunkers, then run the trench past its catwalks and wall
+guns to the exhaust port, using the Force or not, and watch the Death Star
+go up before the next wave. Waves and difficulty progress by the original's
+rules. There is no attract sequence beyond a title card, and no sound yet.
 
 ## Running it
 

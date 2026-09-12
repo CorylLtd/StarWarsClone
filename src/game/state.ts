@@ -1,7 +1,7 @@
 import { OPTIONS } from './config';
 import { identityBasis, reversedBasis, vec } from './frame';
 import { createRng } from './random';
-import type { Dogfight, GameState, Player, Surface } from './types';
+import type { Dogfight, GameState, Player, Surface, Trench } from './types';
 
 export function createPlayer(): Player {
   return {
@@ -66,6 +66,39 @@ export function createSurface(): Surface {
   };
 }
 
+export function createTrench(): Trench {
+  return {
+    phase: 'flying',
+    frame: 0,
+    pos: vec(0, 0, 0),
+    vel: vec(0, 0, 0),
+    pie: [],
+    wedgeIndex: 0,
+    rowIndex: 0,
+    farX: 0,
+    nearX: 0,
+    rowStarts: [],
+    slots: Array.from({ length: 16 }, () => ({ left: [0, 0, 0, 0], right: [0, 0, 0, 0], catwalkCue: 0, catwalkLum: 0, struck: 0 })),
+    portX: null,
+    endX: null,
+    force: 0,
+    forceBonus: 0,
+    torpedo: null,
+    torpedoFired: false,
+    repeat: 0,
+    missedFrames: 0,
+    cueIndex: 0,
+    cueIndexPassed: 0,
+    dxScale: 0,
+    dxStep: 0,
+    burstPhase: 0,
+    burstCount: 0,
+    nextTim: 0,
+    shieldsAdded: 0,
+    lastSlot: 0,
+  };
+}
+
 export function createInitialState(seed: number, highScore: number = 0): GameState {
   return {
     mode: 'attract',
@@ -88,6 +121,7 @@ export function createInitialState(seed: number, highScore: number = 0): GameSta
     player: createPlayer(),
     dogfight: createDogfight(),
     surface: createSurface(),
+    trench: createTrench(),
     fireHeld: false,
     fireLatch: false,
     rng: createRng(seed),

@@ -1,7 +1,8 @@
-import { FIELDS_PER_FRAME, OPTIONS, SCORING, SELECT, SHIELDS, TIMING } from './config';
+import { FIELDS_PER_FRAME, OPTIONS, SELECT, TIMING } from './config';
 import { stepCursor } from './cursor';
 import { enterDogfight, stepDogfightFrame, stepDyingFrame } from './dogfight';
 import { enterSurface, stepSurfaceFrame } from './surface';
+import { enterTrench, stepTrenchFrame } from './trench';
 import { reversedBasis } from './frame';
 import { createDogfight, createPlayer } from './state';
 import type { GameState, Input, StageKind } from './types';
@@ -108,10 +109,12 @@ export function beginWave(state: GameState, wave: number): void {
 }
 
 export function enterStage(state: GameState, stage: StageKind): void {
+  const previous = state.stage;
   state.stage = stage;
   state.stageFrames = 0;
   if (stage === 'dogfight') enterDogfight(state);
   if (stage === 'surface') enterSurface(state);
+  if (stage === 'trench') enterTrench(state, state.stageFrames < 0 ? false : previous === 'surface');
   state.events.push({ type: 'stageStarted', stage, wave: state.wave });
 }
 
@@ -139,20 +142,22 @@ function stepPlaying(state: GameState, input: Input): void {
       if (done) enterStage(state, 'trench');
       return;
     }
-    case 'trench':
-      // Stub: the Trench milestone replaces this.
-      if (state.stageFrames >= 60) completeWave(state);
+    case 'trench': {
+      const done = stepTrenchFrame(state, input);
+      if (state.shields < 0) {
+        setMode(state, 'dying');
+        state.events.push({ type: 'playerDied' });
+        return;
+      }
+      if (done) completeWave(state);
       return;
+    }
   }
 }
 
 /** Between Death Stars: shield bonus, bonus shields, difficulty bump, next wave. */
 export function completeWave(state: GameState): void {
   state.events.push({ type: 'waveCompleted', wave: state.wave });
-  state.score += Math.max(0, state.shields) * SHIELDS.endOfWaveBonusPerShield;
-  if (state.firstWave) state.score += SCORING.waveSelectBonus[state.wave] ?? 0;
-  state.shields = Math.min(OPTIONS.startingShields, state.shields + OPTIONS.bonusShieldsPerDeathStar);
-  if (state.score > state.highScore) state.highScore = state.score;
   state.wave = Math.min(98, state.wave + 1);
   if (state.wave < 5) state.difficultyBump = Math.min(4, state.difficultyBump + 1);
   state.difficulty = Math.min(15, state.difficulty + state.difficultyBump);
