@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DARTH, LASER, SCORING } from '../config';
 import { identityBasis, vec } from '../frame';
-import { dogfightState, FIRE, IDLE, runFields, runFrames } from '../testUtils';
+import { dogfightState, FIRE, IDLE, runFrame, runFrames } from '../testUtils';
 import { makeAlien } from './aliens';
 import { hitAlien } from './aliens';
 
@@ -21,7 +21,7 @@ describe('lasers versus aliens', () => {
     const alien = state.dogfight.aliens[0]!;
     alien.script.timer = 10000;
     alien.script.flags = 0;
-    const events = runFields(state, 2, FIRE);
+    const events = runFrame(state, FIRE);
     expect(events.some((e) => e.type === 'laserHitAlien' && e.destroyed)).toBe(true);
     expect(state.score).toBe(SCORING.tieFighter);
     // The slot is refilled by the next alien of the level list the same frame.
@@ -36,7 +36,7 @@ describe('lasers versus aliens', () => {
     alien.pos = vec(8000, 3000, 0);
     alien.script.timer = 10000;
     alien.script.flags = 0;
-    const events = runFields(state, 2, FIRE);
+    const events = runFrame(state, FIRE);
     expect(events.some((e) => e.type === 'laserHitAlien')).toBe(false);
     expect(state.score).toBe(0);
   });
@@ -72,7 +72,7 @@ describe('lasers versus fireballs', () => {
     state.dogfight.aliens = [null, null, null];
     state.dogfight.liveCount = 0;
     state.dogfight.fireballs[5] = { kind: 'live', mover: 'home', pos: vec(6000, 0, 0), timer: 64, at: { x: 0, y: 0 }, halfDistance: 3000, impacting: false };
-    const events = runFields(state, 2, FIRE);
+    const events = runFrame(state, FIRE);
     expect(events.some((e) => e.type === 'laserHitFireball')).toBe(true);
     expect(state.score).toBe(SCORING.fireball);
     expect(state.dogfight.fireballs[5]!.kind).toBe('hurt');

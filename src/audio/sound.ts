@@ -7,7 +7,7 @@ import { SpeechEngine } from './speech';
 export { POKEY_CLOCK_HZ };
 
 /** Level of the speech chip against the POKEYs. */
-export const SPEECH_GAIN = 1.2;
+export const SPEECH_GAIN = 1.3;
 
 /**
  * The sound engine: four modelled POKEY chips driven by the original's effect
@@ -39,7 +39,15 @@ export class SoundEngine {
     this.context = new AudioContext();
     this.master = this.context.createGain();
     this.master.gain.value = 0.7;
-    this.master.connect(this.context.destination);
+    // A limiter on the mix: the Death Star explosion on all eight effect channels over the end music would otherwise clip.
+    const limiter = this.context.createDynamicsCompressor();
+    limiter.threshold.value = -6;
+    limiter.knee.value = 3;
+    limiter.ratio.value = 12;
+    limiter.attack.value = 0.002;
+    limiter.release.value = 0.15;
+    this.master.connect(limiter);
+    limiter.connect(this.context.destination);
     this.board = new PokeyBoard(this.context, this.master, POKEY_CLOCK_HZ);
     this.speech = new SpeechEngine(this.context, this.master, SPEECH_GAIN);
   }

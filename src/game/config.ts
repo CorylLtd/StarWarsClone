@@ -15,8 +15,34 @@ export const GAME_FRAME_IRQS = 12;
 export const VG_FIELD_IRQS = 6;
 /** One vector-generator field in seconds: the simulation step. */
 export const DT = VG_FIELD_IRQS / IRQ_HZ;
-/** Fields per game frame. */
+/** Fields per game frame when the mainline keeps up with the interrupt. */
 export const FIELDS_PER_FRAME = GAME_FRAME_IRQS / VG_FIELD_IRQS;
+
+/**
+ * The Game Frame's real period by screen, in seconds. The original's main
+ * loop also waited for the vector generator to finish drawing, so screens
+ * with more or longer vectors ran slower than the 21 Hz interrupt tick.
+ * Measured in MAME from the frame counter against emulated time
+ * (docs/reference/dogfight-rules.md §2); the explosion and next-wave values
+ * are estimates.
+ */
+export const PACE = {
+  attract: { highScores: 0.0735, banner: 0.0488, instructions: 0.081, scoring: 0.05 },
+  select: 0.0488,
+  initials: 0.0735,
+  /** Dogfight: this with nothing near, rising with the nearest TIE Fighter's size toward the near period. */
+  dogfightFar: 0.05,
+  dogfightNear: 0.1,
+  /** Half-distance at which a TIE Fighter alone brings the Dogfight to its near period. */
+  dogfightNearHalfDistance: 2500,
+  /** The turn toward the Death Star draws it large; the zoom that follows ran at the full rate. */
+  dogfightApproach: 0.091,
+  surface: 0.06,
+  trench: 0.071,
+  deathStarExplosion: 0.083,
+  nextWave: 0.05,
+  dying: 0.08,
+};
 
 /** The vector generator's screen. */
 export const VG = {
@@ -221,9 +247,12 @@ export const TRENCH = {
   shotStartY: 896,
   /** Ground shots hit within the speed plus this. */
   impactPad: 272,
-  /** Laser ray: far point ahead and the cursor scale per pot unit; wall hit tolerances. */
+  /**
+   * Laser ray: the far point is 28672 ahead and offset by 7/8 of the yoke's
+   * 16-bit position (the pot times 256), so it passes through the cursor.
+   */
   rayAhead: 28672,
-  rayPerPot: 7,
+  rayPerPot: (7 / 8) * 256,
   laserRadius: 64,
   /** The port: sits this far before the end wall; the torpedo triggers within this of it. */
   portToEnd: 4096,

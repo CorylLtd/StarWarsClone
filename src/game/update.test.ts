@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DOGFIGHT, FIELDS_PER_FRAME, OPTIONS, SELECT, TIMING } from './config';
+import { DOGFIGHT, OPTIONS, SELECT, TIMING } from './config';
 import { createInitialState } from './state';
-import { dogfightState, FIRE, IDLE, pressFire, runFields, runFrames, runFramesInvulnerable } from './testUtils';
+import { dogfightState, FIRE, IDLE, pressFire, runFields, runFrame, runFrames, runFramesInvulnerable } from './testUtils';
 import { loseShield } from './dogfight/guns';
 
 describe('modes', () => {
@@ -13,7 +13,7 @@ describe('modes', () => {
 
   it('a fire press starts a game at the select screen with fresh shields', () => {
     const state = createInitialState(1);
-    const events = runFields(state, FIELDS_PER_FRAME, FIRE);
+    const events = runFrame(state, FIRE);
     expect(state.mode).toBe('select');
     expect(state.shields).toBe(OPTIONS.startingShields);
     expect(events.map((e) => e.type)).toEqual(['gameStarted', 'speech']);
@@ -21,7 +21,7 @@ describe('modes', () => {
 
   it('the select screen times out into wave 1', () => {
     const state = createInitialState(1);
-    runFields(state, FIELDS_PER_FRAME, FIRE);
+    runFrame(state, FIRE);
     runFrames(state, SELECT.countdownFrames + 1);
     expect(state.mode).toBe('playing');
     expect(state.wave).toBe(0);
@@ -30,11 +30,11 @@ describe('modes', () => {
 
   it('shooting the right-hand Death Star selects wave 5', () => {
     const state = createInitialState(1);
-    runFields(state, FIELDS_PER_FRAME, FIRE);
+    runFrame(state, FIRE);
     // Slew the cursor onto the right miniature at (400, 100): pot x = 100, y = (100 + 104) / 4 = 51.
     const aim = { x: 100 / 127, y: 51 / 127, fire: false };
     runFields(state, 40, aim);
-    runFields(state, FIELDS_PER_FRAME, { ...aim, fire: true });
+    runFrame(state, { ...aim, fire: true });
     expect(state.mode).toBe('playing');
     expect(state.wave).toBe(4);
   });
@@ -160,13 +160,9 @@ describe('cursor', () => {
 describe('fire latch', () => {
   it('a press that lasts a single field between game frames still starts the game', () => {
     const state = createInitialState(1);
-    runFields(state, 1, IDLE); // field 1: no game frame
-    runFields(state, 1, FIRE); // field 2: game frame sees the press
+    runFields(state, 1, FIRE); // the first field never runs a game frame
+    expect(state.frame).toBe(0);
+    runFrame(state, IDLE); // the frame that follows must still see the press
     expect(state.mode).toBe('select');
-    const again = createInitialState(1);
-    runFields(again, 2, IDLE); // fields 1-2
-    runFields(again, 1, FIRE); // field 3: odd, no game frame
-    runFields(again, 1, IDLE); // field 4: game frame must still see it
-    expect(again.mode).toBe('select');
   });
 });

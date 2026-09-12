@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PIES } from '../../data/trench';
 import { SCORING, TRENCH } from '../config';
 import { createInitialState } from '../state';
-import { IDLE, runFields, runFrames } from '../testUtils';
+import { IDLE, runFields, runFrame, runFrames } from '../testUtils';
 import { beginWave, enterStage, startGame } from '../update';
 import { bandAt, checkCatwalks } from './combat';
 import { slotIndex } from './layout';
@@ -102,7 +102,7 @@ describe('the Force', () => {
 
   it('is lost by firing', () => {
     const state = trenchState(0);
-    runFields(state, 2, { x: 0, y: 0, fire: true });
+    runFrame(state, { x: 0, y: 0, fire: true });
     expect(state.trench.force).toBe(-1);
   });
 });
@@ -140,6 +140,29 @@ describe('catwalks', () => {
   });
 });
 
+describe('trench turrets', () => {
+  it('a laser aimed at a wall gun through the cursor destroys it', () => {
+    const state = trenchState(0);
+    const t = state.trench;
+    // The ray leaves at 28672 ahead offset by the cursor: pot 56 right meets the wall 2340 ahead.
+    const px = 56;
+    const py = 28;
+    const wallT = TRENCH.wallY / (TRENCH.rayPerPot * px);
+    const ahead = TRENCH.rayAhead * wallT;
+    const slot = 6;
+    t.pos.x = slot * TRENCH.slotLength + 1024 - ahead;
+    t.pos.y = 0;
+    t.pos.z = TRENCH.bandCentres[1] - TRENCH.rayPerPot * py * wallT;
+    t.slots[slot].right = [0, 3, 0, 0];
+    state.player.cursorPot = { x: px, y: py };
+    state.player.cursorTarget = { x: px, y: py };
+    state.player.cursor = { x: px * 4, y: py * 4 };
+    const events = runFrame(state, { x: px / 127, y: py / 127, fire: true });
+    expect(events.some((e) => e.type === 'turretHit'), 'turret hit').toBe(true);
+    expect(t.slots[slot].right[1]).toBe(0);
+  });
+});
+
 describe('the exhaust port', () => {
   it('a laser ray onto the floor near the port launches the torpedo, and the end wall then destroys the Death Star', () => {
     const state = trenchState(0);
@@ -160,7 +183,7 @@ describe('the exhaust port', () => {
     state.player.cursorPot = { x: 0, y: rsy };
     state.player.cursorTarget = { x: 0, y: rsy };
     state.player.cursor = { x: 0, y: rsy * 4 };
-    const events = runFields(state, 2, { x: 0, y: rsy / 127, fire: true });
+    const events = runFrame(state, { x: 0, y: rsy / 127, fire: true });
     expect(events.some((e) => e.type === 'torpedoFired'), 'torpedo fired').toBe(true);
     expect(t.torpedoFired).toBe(true);
     // Reach the end wall.

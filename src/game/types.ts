@@ -343,6 +343,10 @@ export interface GameState {
   time: number;
   /** Vector generator fields since the state was created; a game frame is every second field. */
   field: number;
+  /** Game frames since the state was created. */
+  frame: number;
+  /** Fields' worth of the current frame period accumulated; a frame runs when it reaches one. */
+  frameDebt: number;
   /** Game frames since the current mode began. */
   modeFrames: number;
   /** Wave counter as the original keeps it: 0 = displayed wave 1. */

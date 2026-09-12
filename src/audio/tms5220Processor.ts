@@ -137,7 +137,6 @@ class Tms5220Processor extends AudioWorkletProcessor {
     this.last = 0; this.next = 0;
     this.dcIn = 0; this.dcOut = 0;
     this.queue = [];
-    this.sample = 0;
     this.port.onmessage = (e) => {
       const m = e.data;
       if (m.type === 'speak') {
@@ -153,7 +152,7 @@ class Tms5220Processor extends AudioWorkletProcessor {
     const out = outputs[0][0];
     const n = out.length;
     for (let i = 0; i < n; i++) {
-      const now = this.sample + i;
+      const now = currentFrame + i;
       if (this.queue.length && this.queue[0].at <= now && !this.chip.speaking) this.chip.speak(this.queue.shift().data);
       this.acc += this.step;
       while (this.acc >= 1) {
@@ -167,7 +166,6 @@ class Tms5220Processor extends AudioWorkletProcessor {
       }
       out[i] = this.last + (this.next - this.last) * this.acc;
     }
-    this.sample += n;
     return true;
   }
 }

@@ -116,7 +116,9 @@ how often enemies fire.
 _Avoid_: difficulty level, rank
 
 **Game Frame**:
-One tick of the game's logic, every twelfth interrupt, about 21 a second.
+One tick of the game's logic: one pass of the original's main loop, at most
+every twelfth interrupt (about 21 a second) and slower on screens the vector
+generator took longer to draw, such as the Trench.
 _Avoid_: tick, update, step
 
 **Field**:

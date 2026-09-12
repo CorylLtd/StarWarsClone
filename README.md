@@ -97,7 +97,10 @@ src/
 `src/game` knows nothing about rendering or sound. It works in the original's
 own frame and units (X forward, Y right, Z up, the arcade's universe units and
 vector-generator screen units), steps once per display field (about 42 Hz)
-with game logic every second field as the cabinet did, draws all randomness
+with game logic at the cabinet's own pace (`src/game/pace.ts`: at most every
+second field, and slower on the screens its vector generator took longer to
+draw, so the Trench and a close TIE Fighter run at the arcade's 10 to 14
+frames a second rather than 21), draws all randomness
 from a seeded generator, and reports one-off happenings by pushing `GameEvent`
 values that `main.ts` forwards to the renderer and sound engine. The
 simulation projects objects to screen units itself for the cursor hit tests;

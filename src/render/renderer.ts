@@ -350,7 +350,8 @@ export class WorldRenderer {
 
   private drawFireballs(state: GameState): void {
     for (const fb of state.dogfight.fireballs) {
-      if (!fb) continue;
+      // A shot fired after this frame's projection has no screen position yet; drawing it would flash it full size at the centre.
+      if (!fb || fb.halfDistance <= 0) continue;
       const cx = fb.at.x;
       const cy = fb.at.y + VG.offsetY;
       const factor = Math.min(4, Math.max(1 / 64, 512 / Math.max(1, fb.halfDistance)));

@@ -88,7 +88,7 @@ So the Surface stage is skipped **only on displayed wave 1**, i.e. the first Dea
 | Game clock `GTIME` | ticks every 4 IRQs (16 ms), 250 ticks = 4 s. | WSINT.MAC:IRQ |
 | `FRAME` counter | 16-bit, +1 per game frame, sticks at 0x8000 on overflow. Code often uses `FRAMEL & 0x0F == 0` as "about a second" (really 0.8 s). | WSMAIN.MAC:IFRAME |
 
-**Conclusion for the recreation:** run all game logic at a fixed 20 Hz tick; run cursor slew and sprite animation at ~40 Hz (or per display frame). All per-frame constants in this document are per 20 Hz tick unless stated.
+**Conclusion for the recreation:** run cursor slew and sprite animation at ~40 Hz (or per display frame), and game logic at the mainline's rate. *(Revised 2026-09-13.)* That rate is **not a fixed 20 Hz**: after `WAITFRAME` the mainline also spins until the vector generator has finished the previous buffer (`VGSYNC`), and `LSR GMSYNC` drops any game ticks it missed. Screens the VG draws slowly therefore run slower. Measured in MAME (`FRAME` at 0x4842 against emulated time): banner and scoring page ≈ 20.5 and 20 frames/s, high score table ≈ 13.6, flight instructions ≈ 12.3, trench ≈ 14.4 (15.7 with the yoke hard over). All per-frame constants in this document are per frame; the recreation reproduces the measured rates per screen.
 
 Freeze/single-step option: option bank-1 switch 8 freezes the mainline; left trigger edge advances one game frame (WSMAIN.MAC:WAITFRAME).
 

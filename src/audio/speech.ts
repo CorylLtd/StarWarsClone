@@ -3,6 +3,9 @@ import { BREATH, PAUSE, SPEECH_LINES, SPEECH_TIMING } from './speechLines';
 import { FRAME_SAMPLES, SAMPLE_RATE, TMS5220_TABLES } from './tms5220Tables';
 import { TMS5220_PROCESSOR_SOURCE } from './tms5220Processor';
 
+/** Lines kept in the dev console's history. */
+const HISTORY_LENGTH = 64;
+
 /**
  * The speech engine: the sound board's sentence queue in front of a TMS5220
  * model. A line becomes its words, spoken one after another with the board's
@@ -13,7 +16,8 @@ import { TMS5220_PROCESSOR_SOURCE } from './tms5220Processor';
 export class SpeechEngine {
   private node: AudioWorkletNode | null = null;
   private readonly ready: Promise<void>;
-  private readonly started: number;
+  /** Messages posted before the worklet was up, sent as soon as it is. */
+  private pending: unknown[] = [];
   /** Context time when the queue drains: the end of the last sentence plus the inter-message delay. */
   private freeAt = 0;
   /** Context time when the last queued sentence stops sounding. */
@@ -26,7 +30,6 @@ export class SpeechEngine {
     out: AudioNode,
     gain = 1,
   ) {
-    this.started = ctx.currentTime;
     const url = URL.createObjectURL(new Blob([TMS5220_PROCESSOR_SOURCE], { type: 'application/javascript' }));
     this.ready = ctx.audioWorklet.addModule(url).then(() => {
       this.node = new AudioWorkletNode(ctx, 'tms5220', { outputChannelCount: [1], processorOptions: { tables: TMS5220_TABLES } });
@@ -34,7 +37,14 @@ export class SpeechEngine {
       g.gain.value = gain;
       this.node.connect(g);
       g.connect(out);
+      for (const m of this.pending) this.node.port.postMessage(m);
+      this.pending = [];
     });
+  }
+
+  private post(message: unknown): void {
+    if (this.node) this.node.port.postMessage(message);
+    else this.pending.push(message);
   }
 
   whenReady(): Promise<void> {
@@ -44,7 +54,7 @@ export class SpeechEngine {
   /** Queue a line. Returns when it will start, or null if it was dropped or unknown. */
   say(line: string, from = this.ctx.currentTime + 0.02): number | null {
     const entry = SPEECH_LINES[line];
-    if (!entry || !this.node) return null;
+    if (!entry) return null;
     const now = this.ctx.currentTime;
     if (now >= this.freeAt) this.queued = 0;
     const busy = this.queued > 0 || now < this.busyUntil;
@@ -59,13 +69,14 @@ export class SpeechEngine {
       }
       const data = SPEECH_WORDS[word === BREATH ? BREATH : word];
       if (!data) continue;
-      this.node.port.postMessage({ type: 'speak', at: this.sampleAt(t), data: hexBytes(data.data) });
+      this.post({ type: 'speak', at: this.sampleAt(t), data: hexBytes(data.data) });
       t += (data.frames * FRAME_SAMPLES) / SAMPLE_RATE - SPEECH_TIMING.fifoTail + SPEECH_TIMING.interWord;
     }
     this.busyUntil = t;
     this.freeAt = t + SPEECH_TIMING.interMessage;
     this.queued += 1;
     this.spoken.push({ line, at: start });
+    if (this.spoken.length > HISTORY_LENGTH) this.spoken.shift();
     return start;
   }
 
@@ -80,7 +91,7 @@ export class SpeechEngine {
   }
 
   private sampleAt(time: number): number {
-    return Math.max(0, Math.round((time - this.started) * this.ctx.sampleRate));
+    return Math.max(0, Math.round(time * this.ctx.sampleRate));
   }
 }
 

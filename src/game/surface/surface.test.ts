@@ -3,7 +3,7 @@ import { MAZES } from '../../data/surface';
 import { SCORING, SURFACE, VG } from '../config';
 import { vec } from '../frame';
 import { createInitialState } from '../state';
-import { FIRE, runFields, runFrames } from '../testUtils';
+import { FIRE, runFields, runFrame, runFrames } from '../testUtils';
 import { beginWave, enterStage, startGame } from '../update';
 import { checkCollisions, distanceShrink, distanceTo, viewBuildings } from './buildings';
 
@@ -109,7 +109,7 @@ describe('surface combat', () => {
     const k = (VG.focal / d) * distanceShrink(d);
     const base = (VG.focal * -state.surface.pos.z) / d;
     const input = aimAt(state, 0, base + (SURFACE.hatBottom + 300) * k);
-    const events = runFields(state, 2, input);
+    const events = runFrame(state, input);
     expect(events.some((e) => e.type === 'towerTopHit')).toBe(true);
     expect(tower.damaged).toBe(true);
     expect(state.score).toBe(SURFACE.towerPointsStart);
@@ -123,7 +123,7 @@ describe('surface combat', () => {
     const k = (VG.focal / d) * distanceShrink(d);
     const base = (VG.focal * -state.surface.pos.z) / d;
     const input = aimAt(state, 0, base + 2000 * k);
-    const events = runFields(state, 2, input);
+    const events = runFrame(state, input);
     expect(events.some((e) => e.type === 'laserSplash')).toBe(true);
     expect(tower.damaged).toBe(false);
     expect(state.score).toBe(0);
@@ -140,7 +140,7 @@ describe('surface combat', () => {
     const k = (VG.focal / d) * distanceShrink(d);
     const base = (VG.focal * -state.surface.pos.z) / d;
     const input = aimAt(state, 0, base + 700 * k);
-    const events = runFields(state, 2, input);
+    const events = runFrame(state, input);
     expect(events.some((e) => e.type === 'bunkerHit')).toBe(true);
     expect(state.score).toBe(SCORING.laserBunker);
   });

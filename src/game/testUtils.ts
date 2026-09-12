@@ -1,4 +1,4 @@
-import { DT, FIELDS_PER_FRAME } from './config';
+import { DT } from './config';
 import { createInitialState } from './state';
 import type { GameEvent, GameState, Input } from './types';
 import { beginWave, startGame, step } from './update';
@@ -26,14 +26,27 @@ export function runFields(state: GameState, fields: number, input: Input = IDLE)
   return out;
 }
 
-/** Step whole game frames. */
-export function runFrames(state: GameState, frames: number, input: Input = IDLE): GameEvent[] {
-  return runFields(state, frames * FIELDS_PER_FRAME, input);
+/** Step fields until one game frame has run (how many fields that takes depends on the screen's pace). */
+export function runFrame(state: GameState, input: Input = IDLE): GameEvent[] {
+  const out: GameEvent[] = [];
+  const target = state.frame + 1;
+  while (state.frame < target) {
+    step(state, input, DT);
+    out.push(...state.events);
+  }
+  return out;
 }
 
-/** Press fire for one field, then release. */
+/** Step whole game frames. */
+export function runFrames(state: GameState, frames: number, input: Input = IDLE): GameEvent[] {
+  const out: GameEvent[] = [];
+  for (let i = 0; i < frames; i++) out.push(...runFrame(state, input));
+  return out;
+}
+
+/** Press fire through one game frame, then release for one. */
 export function pressFire(state: GameState): GameEvent[] {
-  return [...runFields(state, FIELDS_PER_FRAME, FIRE), ...runFields(state, FIELDS_PER_FRAME, IDLE)];
+  return [...runFrame(state, FIRE), ...runFrame(state, IDLE)];
 }
 
 /** Step whole game frames with the shields topped up every frame, so flow tests outlive the fireballs. */
@@ -41,7 +54,7 @@ export function runFramesInvulnerable(state: GameState, frames: number, input: I
   const out: GameEvent[] = [];
   for (let i = 0; i < frames; i++) {
     state.shields = Math.max(state.shields, 6);
-    out.push(...runFields(state, FIELDS_PER_FRAME, input));
+    out.push(...runFrame(state, input));
   }
   return out;
 }

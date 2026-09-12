@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HIGH_SCORE_DEFAULTS } from '../../data/attract';
 import { ATTRACT } from '../config';
 import { createInitialState } from '../state';
-import { FIRE, IDLE, runFields, runFrames } from '../testUtils';
+import { FIRE, IDLE, runFrame, runFrames } from '../testUtils';
 import { storyLineScale } from './index';
 import { beginInitials, hoveredItem, qualifyingRow } from './highScores';
 
@@ -39,7 +39,7 @@ describe('attract cycle', () => {
   it('a trigger pull starts a game from any attract screen', () => {
     const state = createInitialState(1);
     runFrames(state, 300);
-    runFields(state, 2, FIRE);
+    runFrame(state, FIRE);
     expect(state.mode).toBe('select');
   });
 });
@@ -77,20 +77,20 @@ describe('high scores', () => {
     };
     let a = aim(-292, -92);
     expect(hoveredItem(state)).toBe('A');
-    runFields(state, 2, { ...a, fire: true });
-    runFields(state, 2, { ...a, fire: false });
+    runFrame(state, { ...a, fire: true });
+    runFrame(state, { ...a, fire: false });
     expect(state.initials.letters).toEqual(['A']);
     a = aim(284, -140);
     expect(hoveredItem(state)).toBe('RUB');
-    runFields(state, 2, { ...a, fire: true });
-    runFields(state, 2, { ...a, fire: false });
+    runFrame(state, { ...a, fire: true });
+    runFrame(state, { ...a, fire: false });
     expect(state.initials.letters).toEqual([]);
     a = aim(-244, -476);
-    runFields(state, 2, { ...a, fire: true });
-    runFields(state, 2, { ...a, fire: false });
+    runFrame(state, { ...a, fire: true });
+    runFrame(state, { ...a, fire: false });
     a = aim(284, -92);
     expect(hoveredItem(state)).toBe('END');
-    runFields(state, 2, { ...a, fire: true });
+    runFrame(state, { ...a, fire: true });
     expect(state.mode).toBe('attract');
     expect(state.attract.phase).toBe('highScores');
     expect(state.highScores[3].initials).toBe('J');

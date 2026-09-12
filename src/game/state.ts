@@ -109,6 +109,8 @@ export function createInitialState(seed: number, highScore: number = 0, highScor
     mode: 'attract',
     time: 0,
     field: 0,
+    frame: 0,
+    frameDebt: 0,
     modeFrames: 0,
     wave: 0,
     difficulty: OPTIONS.playDifficulty,

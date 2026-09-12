@@ -1,5 +1,5 @@
-import { FIELDS_PER_FRAME, OPTIONS, SELECT, TIMING } from './config';
-void FIELDS_PER_FRAME;
+import { DT, OPTIONS, SELECT, TIMING } from './config';
+import { framePeriod } from './pace';
 import { stepCursor } from './cursor';
 import { enterDogfight, stepDogfightFrame, stepDyingFrame } from './dogfight';
 import { enterSurface, stepSurfaceFrame } from './surface';
@@ -12,7 +12,8 @@ import type { GameState, Input, StageKind } from './types';
 
 /**
  * Advance the simulation by one vector-generator field. The cursor slews every
- * field, as the original's interrupt did; game logic runs every second field.
+ * field, as the original's interrupt did; game logic runs once the current
+ * screen's frame period has elapsed, every second field at best.
  */
 export function step(state: GameState, input: Input, dt: number): void {
   state.events.length = 0;
@@ -20,12 +21,15 @@ export function step(state: GameState, input: Input, dt: number): void {
   state.field += 1;
   stepCursor(state.player, input);
   state.fireLatch = state.fireLatch || input.fire;
-  if (state.field % FIELDS_PER_FRAME !== 0) return;
+  state.frameDebt += DT / framePeriod(state);
+  if (state.frameDebt < 1) return;
+  state.frameDebt -= 1;
   stepFrame(state, { ...input, fire: state.fireLatch });
   state.fireLatch = false;
 }
 
 function stepFrame(state: GameState, input: Input): void {
+  state.frame += 1;
   state.modeFrames += 1;
   if (state.lastScoreFade > 0) state.lastScoreFade = Math.max(0, state.lastScoreFade - 8);
   switch (state.mode) {

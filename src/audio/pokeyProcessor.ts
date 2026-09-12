@@ -125,7 +125,6 @@ class PokeyProcessor extends AudioWorkletProcessor {
     this.ticksPerSample = clock / sampleRate;
     this.acc = 0;
     this.queue = [];
-    this.sample = 0;
     this.port.onmessage = (e) => {
       const m = e.data;
       if (m.type === 'writes') {
@@ -147,7 +146,7 @@ class PokeyProcessor extends AudioWorkletProcessor {
     const n = out.length;
     let q = 0;
     for (let i = 0; i < n; i++) {
-      const now = this.sample + i;
+      const now = currentFrame + i;
       while (q < this.queue.length && this.queue[q].at <= now) {
         const w = this.queue[q];
         this.chips[w.chip].write(w.reg, w.value);
@@ -162,7 +161,6 @@ class PokeyProcessor extends AudioWorkletProcessor {
       if (music) music[i] = (this.chips[2].mix() + this.chips[3].mix()) * 0.6;
     }
     if (q > 0) this.queue.splice(0, q);
-    this.sample += n;
     return true;
   }
 }
