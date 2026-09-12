@@ -1,4 +1,7 @@
 import { SoundEngine } from './audio/sound';
+import { PokeyBoard } from './audio/pokey';
+import { COMPOUND, EFFECTS } from './audio/effects';
+import { POKEY_CLOCK_HZ } from './audio/sound';
 import { DT } from './game/config';
 import { createInitialState, defaultHighScores } from './game/state';
 import { ATTRACT } from './game/config';
@@ -70,6 +73,55 @@ if (import.meta.env.DEV) {
     __swEnterStage: (stage: StageKind, wave?: number) => void;
   };
   dev.__swWorld = world;
+  (window as unknown as { __swPokeyBoard: typeof PokeyBoard }).__swPokeyBoard = PokeyBoard;
+  // Render one effect offline and describe it: peak level and the dominant pitch every 100 ms.
+  (window as unknown as { __swRenderEffect: (name: string) => Promise<unknown> }).__swRenderEffect = async (name: string) => {
+    const parts = COMPOUND[name] ?? [name];
+    const seconds = Math.max(...parts.map((p) => EFFECTS[p].length / EFFECTS[p].tickHz)) + 0.1;
+    const off = new OfflineAudioContext(1, Math.ceil(48000 * seconds), 48000);
+    const board = new PokeyBoard(off, off.destination, POKEY_CLOCK_HZ);
+    await board.whenReady();
+    const writes = [];
+    for (const p of parts) {
+      const e = EFFECTS[p];
+      const spt = 48000 / e.tickHz;
+      for (const s of e.steps) writes.push({ at: Math.round(s.t * spt), chip: e.chip, reg: s.reg, value: s.value });
+    }
+    board.write(writes);
+    await new Promise((r) => setTimeout(r, 200));
+    const d = (await off.startRendering()).getChannelData(0);
+    const window = 4800;
+    const pitches: number[] = [];
+    let peak = 0;
+    for (let start = 0; start + window <= d.length; start += window) {
+      let crossings = 0;
+      let p = 0;
+      for (let i = start + 1; i < start + window; i++) {
+        p = Math.max(p, Math.abs(d[i]));
+        if ((d[i - 1] < 0) !== (d[i] < 0)) crossings += 1;
+      }
+      peak = Math.max(peak, p);
+      pitches.push(p < 0.01 ? 0 : Math.round(crossings * 5));
+    }
+    return { seconds: Number(seconds.toFixed(2)), peak: Number(peak.toFixed(3)), pitchPer100ms: pitches };
+  };
+  // Offline self-test of the POKEY model: a pure tone at AUDF 0x28 on the 64 kHz clock should measure about 64000 / (2 * 41) Hz.
+  (window as unknown as { __swPokeyTest: () => Promise<number> }).__swPokeyTest = async () => {
+    const off = new OfflineAudioContext(1, 48000, 48000);
+    const board = new PokeyBoard(off, off.destination, 1500000);
+    await board.whenReady();
+    board.write([
+      { at: 0, chip: 0, reg: 8, value: 0 },
+      { at: 0, chip: 0, reg: 0, value: 0x28 },
+      { at: 0, chip: 0, reg: 1, value: 0xaf },
+    ]);
+    await new Promise((r) => setTimeout(r, 200));
+    const buf = await off.startRendering();
+    const d = buf.getChannelData(0);
+    let crossings = 0;
+    for (let i = 1; i < d.length; i++) if ((d[i - 1] < 0) !== (d[i] < 0)) crossings += 1;
+    return crossings / 2;
+  };
   dev.__swStep = (fields) => {
     for (let i = 0; i < fields; i++) step(state, { x: 0, y: 0, fire: false }, DT);
   };
@@ -83,6 +135,7 @@ if (import.meta.env.DEV) {
 
 // Open the game with ?mute to run without any audio.
 const muted = new URLSearchParams(location.search).has('mute');
+sound.muted = muted;
 if (!muted) {
   window.addEventListener('keydown', () => sound.unlock());
   window.addEventListener('pointerdown', () => sound.unlock());
@@ -91,6 +144,12 @@ if (!muted) {
 function dispatch(event: GameEvent): void {
   world.handleEvent(event);
   switch (event.type) {
+    case 'sound':
+      sound.play(event.name);
+      break;
+    case 'passby':
+      sound.play(event.receding ? 'passbyRecede' : 'passby');
+      break;
     case 'gameOver':
       saveHighScore(state.highScore);
       break;

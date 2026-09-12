@@ -53,6 +53,7 @@ export function hurtFireball(state: GameState, index: number): void {
   fb.timer = FIREBALL.hurtFrames;
   addScore(state, SCORING.fireball);
   state.events.push({ type: 'laserHitFireball' });
+  state.events.push({ type: 'sound', name: 'cannonStop' });
   state.events.push({ type: 'sound', name: 'shotDestroyed' });
 }
 
@@ -76,7 +77,10 @@ export function shieldHit(state: GameState): void {
   p.flashFrames = FIREBALL.screenFlashFrames;
   if (!state.firstShieldHitDone) {
     state.firstShieldHitDone = true;
-    if (state.shields > 3) state.events.push({ type: 'speech', line: "I'M HIT BUT NOT BAD, R2 SEE WHAT YOU CAN DO WITH IT" });
+    if (state.shields > 3) {
+      state.events.push({ type: 'speech', line: "I'M HIT BUT NOT BAD, R2 SEE WHAT YOU CAN DO WITH IT" });
+      state.events.push({ type: 'sound', name: 'r2Sad' });
+    }
   }
   loseShield(state);
 }
@@ -90,6 +94,13 @@ export function loseShield(state: GameState): void {
   state.shields = old - 1;
   state.player.gaugeFrames = 10 + old;
   state.events.push({ type: 'shieldLost', remaining: state.shields });
-  if (state.shields === 2) state.events.push({ type: 'speech', line: 'R2, TRY AND INCREASE THE POWER' });
-  if (state.shields === 0) state.events.push({ type: 'speech', line: "I'VE LOST R2" });
+  if (state.shields === 2) {
+    state.events.push({ type: 'speech', line: 'R2, TRY AND INCREASE THE POWER' });
+    state.events.push({ type: 'sound', name: 'r2Down' });
+  }
+  if (state.shields === 1) state.events.push({ type: 'sound', name: 'r2C' });
+  if (state.shields === 0) {
+    state.events.push({ type: 'speech', line: "I'VE LOST R2" });
+    state.events.push({ type: 'sound', name: 'r2Dead' });
+  }
 }

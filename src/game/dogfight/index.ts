@@ -76,6 +76,7 @@ export function stepDogfightFrame(state: GameState, input: Input): boolean {
       if (d.aliens.every((a) => a === null)) {
         d.phase = 'turn';
         state.events.push({ type: 'speech', line: "THIS IS RED FIVE, I'M GOING IN" });
+        state.events.push({ type: 'sound', name: 'r2Yes' });
       }
       return false;
     }

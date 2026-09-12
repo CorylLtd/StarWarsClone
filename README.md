@@ -14,13 +14,15 @@ for exactly what the recreation does and does not take from the original.
 
 ## Status
 
-Milestone 5 of 9: everything a player sees is in. The attract cycles the
-high-score table, the banner with its receding logo and storyline, the
-flight instructions and the scoring page on the original's clock; a game
-runs the Dogfight, the Surface and the Trench through the Death Star's
-destruction and on to the next wave by the original's rules; a qualifying
-score signs the table with the yoke, and the top three rows persist as the
-cabinet's NVRAM did. There is no sound yet.
+Milestone 6 of 9: everything a player sees is in, and the sound effects are
+back. The attract cycles the high-score table, the banner with its receding
+logo and storyline, the flight instructions and the scoring page on the
+original's clock; a game runs the Dogfight, the Surface and the Trench
+through the Death Star's destruction and on to the next wave by the
+original's rules; a qualifying score signs the table with the yoke, and the
+top three rows persist as the cabinet's NVRAM did. Every effect is the
+original sound board's own register sequence played through a model of its
+four POKEY chips. Music and speech are still to come.
 
 ## Running it
 
@@ -41,6 +43,18 @@ the raw lines, or `?bloom=strength,radius,threshold` to tune the glow. In dev
 builds the live game state is exposed as `window.__sw`, the sound engine as
 `window.__swSound`, the renderer as `window.__swWorld`, and
 `window.__swEnterStage(stage, wave)` jumps straight into a stage.
+
+## Audio
+
+Nothing is sampled. The cabinet's sound board drove four POKEY chips from a
+second 6809, and `src/audio/pokeyProcessor.ts` models those chips in an
+AudioWorklet: per-channel dividers on the chip's clock selections, the 4-,
+5-, 9- and 17-bit polynomial counters, the 16-bit joins and high-pass
+flip-flops, and 4-bit volumes. `src/audio/effects.ts` holds every effect as
+the register writes the sound CPU's sequencer made, beat by beat, traced from
+its tables; `src/audio/sound.ts` schedules them by sample time when the game
+raises a sound event. The `AudioContext` is created lazily on the first key
+or pointer event, because browsers refuse to start audio without a gesture.
 
 ## How the code is organised
 

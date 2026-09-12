@@ -227,6 +227,15 @@ _Avoid_: station, base
 
 ### Sound
 
+**Sound Effect**:
+One of the cabinet's synthesised sounds, played as the register sequence its
+sound board's sequencer produced, beat by beat.
+_Avoid_: sample, sfx, clip
+
+**Beat**:
+One step of the sound board's sequencer, about eight milliseconds.
+_Avoid_: tick, frame
+
 **Speech Line**:
 A spoken phrase played at a fixed point in play, using the arcade's words in a
 voice of our own.
