@@ -1,8 +1,11 @@
 import { FIELDS_PER_FRAME, OPTIONS, SELECT, TIMING } from './config';
+void FIELDS_PER_FRAME;
 import { stepCursor } from './cursor';
 import { enterDogfight, stepDogfightFrame, stepDyingFrame } from './dogfight';
 import { enterSurface, stepSurfaceFrame } from './surface';
 import { enterTrench, stepTrenchFrame } from './trench';
+import { enterAttract, stepAttractFrame } from './attract';
+import { beginInitials, qualifyingRow, stepInitialsFrame } from './attract/highScores';
 import { reversedBasis } from './frame';
 import { createDogfight, createPlayer } from './state';
 import type { GameState, Input, StageKind } from './types';
@@ -27,8 +30,12 @@ function stepFrame(state: GameState, input: Input): void {
   if (state.lastScoreFade > 0) state.lastScoreFade = Math.max(0, state.lastScoreFade - 8);
   switch (state.mode) {
     case 'attract':
+      stepAttractFrame(state);
       if (input.fire && !state.fireHeld) startGame(state);
       state.fireHeld = input.fire;
+      break;
+    case 'initials':
+      if (stepInitialsFrame(state, input.fire)) enterAttractMode(state, 'highScores');
       break;
     case 'select':
       stepSelect(state, input);
@@ -37,11 +44,8 @@ function stepFrame(state: GameState, input: Input): void {
       stepPlaying(state, input);
       break;
     case 'dying':
-      stepDyingFrame(state);
+      if (state.stage === 'dogfight') stepDyingFrame(state);
       if (state.modeFrames >= TIMING.deathFrames) endGame(state);
-      break;
-    case 'gameOver':
-      if (state.modeFrames * FIELDS_PER_FRAME >= TIMING.gameOverHold * 42) setMode(state, 'attract');
       break;
   }
 }
@@ -166,8 +170,24 @@ export function completeWave(state: GameState): void {
   enterStage(state, 'dogfight');
 }
 
+/** End of game: speech, the high-score check, then initials entry or the banner with Ben's theme. */
 export function endGame(state: GameState): void {
   if (state.score > state.highScore) state.highScore = state.score;
-  setMode(state, 'gameOver');
+  state.attract.lastWaveDisplayed = state.wave + 1;
   state.events.push({ type: 'gameOver' });
+  state.events.push({ type: 'speech', line: 'REMEMBER' });
+  state.events.push({ type: 'speech', line: 'THE FORCE WILL BE WITH YOU, ALWAYS' });
+  const row = qualifyingRow(state.highScores, state.score);
+  if (row >= 0) {
+    beginInitials(state, row);
+    return;
+  }
+  state.events.push({ type: 'music', cue: 'ben' });
+  enterAttractMode(state, 'banner');
+}
+
+export function enterAttractMode(state: GameState, phase: 'highScores' | 'banner'): void {
+  setMode(state, 'attract');
+  state.fireHeld = true;
+  enterAttract(state, phase);
 }

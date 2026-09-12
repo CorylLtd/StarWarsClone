@@ -51,9 +51,24 @@ The sequence of screens shown when no game is in progress: the banner and
 storyline, the flight instructions, the scoring page, and the high score table.
 _Avoid_: title screen, menu, idle mode, demo
 
+**Banner**:
+The Attract screen where the logo recedes into the distance and the Storyline
+rises after it.
+_Avoid_: title screen, splash, logo screen
+
 **Storyline**:
-The receding text in the Attract that sets up the mission.
+The eight lines of text in the Banner that set up the mission, each rising
+from the bottom and shrinking away toward the vanishing point.
 _Avoid_: crawl, intro text
+
+**Initials Entry**:
+The screen after a qualifying game where the player shoots letters to sign
+the High Score Table.
+_Avoid_: name entry, hi-score entry
+
+**Credit**:
+A play paid for; free play keeps one Credit on the cabinet at all times.
+_Avoid_: coin, token, life
 
 **High Score Table**:
 The ten best scores with three-letter initials, headed "Princess Leia's Rebel

@@ -1,6 +1,8 @@
 import { SoundEngine } from './audio/sound';
 import { DT } from './game/config';
-import { createInitialState } from './game/state';
+import { createInitialState, defaultHighScores } from './game/state';
+import { ATTRACT } from './game/config';
+import type { HighScoreRow } from './game/types';
 import type { GameEvent } from './game/types';
 import { enterStage, step } from './game/update';
 import type { StageKind } from './game/types';
@@ -9,6 +11,8 @@ import { WorldRenderer } from './render/renderer';
 import { ScreenFrame } from './ui/screenFrame';
 
 const HIGH_SCORE_KEY = 'starwars.highScore';
+/** The cabinet's NVRAM kept only the top three rows; so do we. */
+const TABLE_KEY = 'starwars.highScores';
 /** Draw at most this often; the simulation still steps at DT on every animation frame. */
 const MAX_RENDER_FPS = 60;
 const MIN_RENDER_INTERVAL_MS = 1000 / MAX_RENDER_FPS - 4;
@@ -21,6 +25,27 @@ function loadHighScore(): number {
   }
 }
 
+function loadTable(): HighScoreRow[] {
+  const table = defaultHighScores();
+  try {
+    const saved = JSON.parse(localStorage.getItem(TABLE_KEY) ?? '[]') as HighScoreRow[];
+    for (let i = 0; i < Math.min(ATTRACT.persistedRows, saved.length); i++) {
+      if (typeof saved[i]?.score === 'number' && typeof saved[i]?.initials === 'string') table[i] = saved[i];
+    }
+  } catch {
+    /* keep the defaults */
+  }
+  return table;
+}
+
+function saveTable(table: HighScoreRow[]): void {
+  try {
+    localStorage.setItem(TABLE_KEY, JSON.stringify(table.slice(0, ATTRACT.persistedRows)));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 function saveHighScore(value: number): void {
   try {
     localStorage.setItem(HIGH_SCORE_KEY, String(value));
@@ -30,14 +55,24 @@ function saveHighScore(value: number): void {
 }
 
 const screen = document.getElementById('screen')!;
-const state = createInitialState(Date.now() >>> 0, loadHighScore());
+const state = createInitialState(Date.now() >>> 0, loadHighScore(), loadTable());
 const input = new YokeInput(window, screen);
 const world = new WorldRenderer(screen);
 new ScreenFrame(window, screen, () => world.resize());
 const sound = new SoundEngine();
 
 if (import.meta.env.DEV) {
-  const dev = window as unknown as { __sw: typeof state; __swSound: typeof sound; __swEnterStage: (stage: StageKind, wave?: number) => void };
+  const dev = window as unknown as {
+    __sw: typeof state;
+    __swSound: typeof sound;
+    __swWorld: typeof world;
+    __swStep: (fields: number) => void;
+    __swEnterStage: (stage: StageKind, wave?: number) => void;
+  };
+  dev.__swWorld = world;
+  dev.__swStep = (fields) => {
+    for (let i = 0; i < fields; i++) step(state, { x: 0, y: 0, fire: false }, DT);
+  };
   dev.__sw = state;
   dev.__swSound = sound;
   dev.__swEnterStage = (stage, wave) => {
@@ -58,6 +93,9 @@ function dispatch(event: GameEvent): void {
   switch (event.type) {
     case 'gameOver':
       saveHighScore(state.highScore);
+      break;
+    case 'initialsDone':
+      saveTable(state.highScores);
       break;
     default:
       break;

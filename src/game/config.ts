@@ -349,8 +349,38 @@ export const SELECT = {
   hitSum: 80,
 };
 
+export const ATTRACT = {
+  highScoresFrames: 256,
+  highScoresFadeFrames: 80,
+  bannerFrames: 512,
+  pageFrames: 434,
+  pageRevealFrames: 320,
+  pageLineEvery: 8,
+  scoringScroll: 960,
+  scoringScrollPerFrame: 8,
+  /** Banner: logo phases and the storyline growth, hold and race-away. */
+  logoFixedUntil: 64,
+  logoGoneAt: 248,
+  logoFixedScale: 0x40,
+  storyGrowUntil: 224,
+  storyHoldUntil: 352,
+  storyRaceStep: 4,
+  storyGoneAt: 240,
+  storyVanishingY: 408,
+  storyOffsetY: -560,
+  /** Attract music: one random tune at a banner start once this many seconds have passed since the last. */
+  musicIntervalSeconds: 400,
+  /** Initials entry timeout and hover box. */
+  initialsTimeoutFrames: 640,
+  hoverBox: 24,
+  hoverOctagon: 32,
+  hoverCursorOffset: { x: -8, y: -116 },
+  /** Persist only the top rows, as the cabinet's NVRAM did. */
+  persistedRows: 3,
+  /** Frames the game-over text takes to grow, and the death phase length. */
+  gameOverGrowFrames: 32,
+};
+
 export const TIMING = {
   deathFrames: 40,
-  /** Seconds the final score stays up before the attract resumes. PLACEHOLDER. */
-  gameOverHold: 6,
 };

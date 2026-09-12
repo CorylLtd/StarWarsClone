@@ -39,17 +39,29 @@ describe('modes', () => {
     expect(state.wave).toBe(4);
   });
 
-  it('the dying roll lasts 40 frames, then game over, then the attract', () => {
+  it('the dying roll lasts 40 frames, then a low score goes to the banner', () => {
     const state = dogfightState();
     state.shields = 0;
     loseShield(state);
     expect(state.shields).toBe(-1);
     runFrames(state, 1);
     expect(state.mode).toBe('dying');
-    runFrames(state, TIMING.deathFrames);
-    expect(state.mode).toBe('gameOver');
-    runFields(state, Math.ceil(TIMING.gameOverHold * 42) + 4);
+    const events = runFrames(state, TIMING.deathFrames);
     expect(state.mode).toBe('attract');
+    expect(state.attract.phase).toBe('banner');
+    expect(events.some((e) => e.type === 'gameOver')).toBe(true);
+  });
+
+  it('a qualifying score goes to initials entry', () => {
+    const state = dogfightState();
+    state.score = 900000;
+    state.shields = 0;
+    loseShield(state);
+    runFrames(state, TIMING.deathFrames + 1);
+    expect(state.mode).toBe('initials');
+    expect(state.initials.row).toBe(3);
+    expect(state.highScores[3].score).toBe(900000);
+    expect(state.highScores.length).toBe(10);
   });
 });
 

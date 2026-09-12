@@ -30,7 +30,7 @@ import {
   TIE_PIECE_PORT_WING,
   TIE_PIECE_STBD_WING,
 } from '../data/vectorRom';
-import { DOGFIGHT, LASER, SELECT, TIMING, VG } from '../game/config';
+import { DOGFIGHT, LASER, SELECT, VG } from '../game/config';
 import { visibleStars } from '../game/dogfight/stars';
 import { toView } from '../game/frame';
 import type { Alien, GameEvent, GameState } from '../game/types';
@@ -42,6 +42,7 @@ import { LineSet } from './lineSet';
 import { modelEdges, placeFromOriginal } from './models';
 import { drawSurface, GROUND_DOT_COLOR } from './surfaceView';
 import { drawDeathStarEnd, drawTorpedo, drawTrench, drawTrenchMessages } from './trenchView';
+import { drawAttractScreen, drawInitialsScreen } from './attractView';
 import { drawNumber, drawText, textWidth } from './text';
 
 const MSAA_SAMPLES = 4;
@@ -200,7 +201,7 @@ export class WorldRenderer {
 
     this.drawAliens(state, inSpace);
     this.drawPieces(state, inSpace);
-    this.drawStars(state, inSpace || (afterTrench && state.trench.phase === 'next'));
+    this.drawStars(state, inSpace || (afterTrench && state.trench.phase === 'next') || state.mode === 'attract');
     this.ground.begin();
     if (onSurface) {
       const n = drawSurface(state, this.ground, this.groundDotPositions);
@@ -237,6 +238,9 @@ export class WorldRenderer {
     } else if (state.mode === 'select') {
       this.drawSelect(state);
       this.drawHud(state);
+      this.drawCursor(state);
+    } else if (state.mode === 'initials') {
+      this.drawInitials(state);
       this.drawCursor(state);
     } else {
       this.drawAttract(state);
@@ -484,28 +488,10 @@ export class WorldRenderer {
   }
 
   private drawAttract(state: GameState): void {
-    const f = this.flat;
-    const center = (text: string, y: number, color: THREE.Color, scale = 1): void =>
-      drawText(f, text, -textWidth(text, scale) / 2, y, color, scale);
-    const red = vgColor('RED');
-    const green = vgColor('GRN');
-    drawText(f, HUD_TEXT.scoreLabel.text, HUD_TEXT.scoreLabel.x, HUD_TEXT.scoreLabel.y, red);
-    drawText(f, HUD_TEXT.waveLabel.text, HUD_TEXT.waveLabel.x, HUD_TEXT.waveLabel.y, red);
-    drawNumber(f, 0, HUD_TEXT.scoreDigits.x, HUD_TEXT.scoreDigits.y, green, 8, 2);
-    drawText(f, '0', HUD_TEXT.waveNumber.x, HUD_TEXT.waveNumber.y, green);
-    if (state.mode === 'gameOver') {
-      center('GAME OVER', 528, vgColor('TRQ'));
-      center('1 COIN 1 PLAY', 480, vgColor('YLW'));
-    } else {
-      center('PULL TRIGGER TO START', 528, Math.floor(this.frame / 30) % 2 === 0 ? red : green);
-      center('1 CREDIT', 480, vgColor('WHT'));
-    }
-    center('HIGH SCORE', 200, vgColor('BLU'));
-    center(String(state.highScore), 160, vgColor('BLU'));
-    center('STAR WARS', -420, green);
-    center('@ 1983 LUCASFILM LTD. AND ATARI,INC.', -456, green);
-    center('ALL RIGHTS RESERVED', -480, green);
-    center('LUCASFILM TRADEMARKS USED UNDER LICENSE.', -504, green);
-    void TIMING;
+    drawAttractScreen(state, this.flat, this.frame);
+  }
+
+  private drawInitials(state: GameState): void {
+    drawInitialsScreen(state, this.flat, this.frame);
   }
 }

@@ -1,7 +1,8 @@
 import { OPTIONS } from './config';
 import { identityBasis, reversedBasis, vec } from './frame';
 import { createRng } from './random';
-import type { Dogfight, GameState, Player, Surface, Trench } from './types';
+import { HIGH_SCORE_DEFAULTS } from '../data/attract';
+import type { Dogfight, GameState, HighScoreRow, Player, Surface, Trench } from './types';
 
 export function createPlayer(): Player {
   return {
@@ -99,7 +100,11 @@ export function createTrench(): Trench {
   };
 }
 
-export function createInitialState(seed: number, highScore: number = 0): GameState {
+export function defaultHighScores(): HighScoreRow[] {
+  return HIGH_SCORE_DEFAULTS.map(([initials, score]) => ({ initials, score }));
+}
+
+export function createInitialState(seed: number, highScore: number = 0, highScores: HighScoreRow[] = defaultHighScores()): GameState {
   return {
     mode: 'attract',
     time: 0,
@@ -112,7 +117,7 @@ export function createInitialState(seed: number, highScore: number = 0): GameSta
     stage: 'dogfight',
     stageFrames: 0,
     score: 0,
-    highScore,
+    highScore: Math.max(highScore, highScores[0]?.score ?? 0),
     shields: OPTIONS.startingShields,
     lastScore: 0,
     lastScoreFade: 0,
@@ -122,6 +127,10 @@ export function createInitialState(seed: number, highScore: number = 0): GameSta
     dogfight: createDogfight(),
     surface: createSurface(),
     trench: createTrench(),
+    attract: { phase: 'highScores', frame: 0, storyScale: [-1, -1, -1, -1, -1, -1, -1, -1], racing: -1, musicClock: 0, lastWaveDisplayed: 0 },
+    initials: { row: -1, letters: [], hover: null, frame: 0 },
+    highScores,
+    credits: 1,
     fireHeld: false,
     fireLatch: false,
     rng: createRng(seed),

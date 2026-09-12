@@ -14,12 +14,13 @@ for exactly what the recreation does and does not take from the original.
 
 ## Status
 
-Milestone 4 of 9: the whole wave is playable. Pull the trigger, pick a Death
-Star, fight the TIE Fighters and Darth's Ship, fly the surface among the
-laser towers and bunkers, then run the trench past its catwalks and wall
-guns to the exhaust port, using the Force or not, and watch the Death Star
-go up before the next wave. Waves and difficulty progress by the original's
-rules. There is no attract sequence beyond a title card, and no sound yet.
+Milestone 5 of 9: everything a player sees is in. The attract cycles the
+high-score table, the banner with its receding logo and storyline, the
+flight instructions and the scoring page on the original's clock; a game
+runs the Dogfight, the Surface and the Trench through the Death Star's
+destruction and on to the next wave by the original's rules; a qualifying
+score signs the table with the yoke, and the top three rows persist as the
+cabinet's NVRAM did. There is no sound yet.
 
 ## Running it
 
@@ -37,8 +38,9 @@ WASD.
 
 Open the game with `?mute` on the URL to run without audio, `?nobloom` to see
 the raw lines, or `?bloom=strength,radius,threshold` to tune the glow. In dev
-builds the live game state is exposed as `window.__sw` and the sound engine as
-`window.__swSound`.
+builds the live game state is exposed as `window.__sw`, the sound engine as
+`window.__swSound`, the renderer as `window.__swWorld`, and
+`window.__swEnterStage(stage, wave)` jumps straight into a stage.
 
 ## How the code is organised
 

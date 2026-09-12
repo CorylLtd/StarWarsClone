@@ -2,7 +2,10 @@ import type { Basis, Vec } from './frame';
 import type { Rng } from './random';
 
 /** Top-level mode: what the cabinet is doing. */
-export type Mode = 'attract' | 'select' | 'playing' | 'dying' | 'gameOver';
+export type Mode = 'attract' | 'select' | 'playing' | 'dying' | 'initials';
+
+/** The attract cycle's screens. */
+export type AttractPhase = 'highScores' | 'banner' | 'instructions' | 'scoring';
 
 /** The three stages of a wave, in order. */
 export type StageKind = 'dogfight' | 'surface' | 'trench';
@@ -274,6 +277,34 @@ export interface Trench {
   lastSlot: number;
 }
 
+export interface HighScoreRow {
+  initials: string;
+  score: number;
+}
+
+export interface Attract {
+  phase: AttractPhase;
+  /** Frames into the phase (PH.TIM counts down in the original; here it counts up). */
+  frame: number;
+  /** Banner: the storyline lines' linear scales (-1 = not started, 240 = gone). */
+  storyScale: number[];
+  /** Which line is currently racing away. */
+  racing: number;
+  /** Frames since the last attract tune; the next plays at a banner start once this passes the interval. */
+  musicClock: number;
+  lastWaveDisplayed: number;
+}
+
+export interface InitialsEntry {
+  /** Which high-score row the player took. */
+  row: number;
+  /** Letters entered so far. */
+  letters: string[];
+  /** The item under the cursor, if any (letter, ' ', 'RUB' or 'END'). */
+  hover: string | null;
+  frame: number;
+}
+
 export type GameEvent =
   | { type: 'gameStarted' }
   | { type: 'waveSelected'; wave: number }
@@ -302,7 +333,9 @@ export type GameEvent =
   | { type: 'music'; cue: string }
   | { type: 'sound'; name: string }
   | { type: 'playerDied' }
-  | { type: 'gameOver' };
+  | { type: 'gameOver' }
+  | { type: 'highScore'; row: number }
+  | { type: 'initialsDone' };
 
 export interface GameState {
   mode: Mode;
@@ -335,6 +368,11 @@ export interface GameState {
   dogfight: Dogfight;
   surface: Surface;
   trench: Trench;
+  attract: Attract;
+  initials: InitialsEntry;
+  highScores: HighScoreRow[];
+  /** Credits: free play holds this at one. */
+  credits: number;
   fireHeld: boolean;
   /** A fire press seen on any field since the last game frame, so no press falls between frames. */
   fireLatch: boolean;
