@@ -50,11 +50,10 @@ class Pokey {
   }
   period(ch) {
     const ctl = this.audctl;
-    const join12 = ctl & 0x10, join34 = ctl & 0x08;
-    const fast1 = ctl & 0x40, fast3 = ctl & 0x20;
-    if (ch === 1 && join12) return (this.audf[1] << 8 | this.audf[0]) + (fast1 ? 7 : 1);
-    if (ch === 3 && join34) return (this.audf[3] << 8 | this.audf[2]) + (fast3 ? 7 : 1);
-    if ((ch === 0 && fast1) || (ch === 2 && fast3)) return this.audf[ch] + 4;
+    // A joined pair is one 16-bit divider: the low channel counts, the high channel's output toggles.
+    if ((ch === 0 || ch === 1) && (ctl & 0x10)) return ((this.audf[1] << 8) | this.audf[0]) + ((ctl & 0x40) ? 7 : 1);
+    if ((ch === 2 || ch === 3) && (ctl & 0x08)) return ((this.audf[3] << 8) | this.audf[2]) + ((ctl & 0x20) ? 7 : 1);
+    if ((ch === 0 && (ctl & 0x40)) || (ch === 2 && (ctl & 0x20))) return this.audf[ch] + 4;
     return this.audf[ch] + 1;
   }
   clockKind(ch) {
@@ -142,7 +141,9 @@ class PokeyProcessor extends AudioWorkletProcessor {
     };
   }
   process(inputs, outputs) {
+    // Output 0 is the two effect chips, output 1 the two music chips (the board low-passes those).
     const out = outputs[0][0];
+    const music = outputs[1] && outputs[1][0];
     const n = out.length;
     let q = 0;
     for (let i = 0; i < n; i++) {
@@ -157,13 +158,11 @@ class PokeyProcessor extends AudioWorkletProcessor {
         for (const chip of this.chips) chip.tick();
         this.acc -= 1;
       }
-      let s = 0;
-      for (const chip of this.chips) s += chip.mix();
-      out[i] = s * 0.6;
+      out[i] = (this.chips[0].mix() + this.chips[1].mix()) * 0.6;
+      if (music) music[i] = (this.chips[2].mix() + this.chips[3].mix()) * 0.6;
     }
     if (q > 0) this.queue.splice(0, q);
     this.sample += n;
-    for (let c = 1; c < outputs[0].length; c++) outputs[0][c].set(out);
     return true;
   }
 }

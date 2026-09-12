@@ -245,3 +245,8 @@ _Avoid_: voice clip, sample, quote
 A piece of music played at a fixed point in play or in the Attract, composed
 for this project.
 _Avoid_: track, theme, song, tune
+
+**Voice**:
+One of the four 16-bit POKEY channels the music plays on: the lead, the
+harmony, the inner voice and the bass.
+_Avoid_: channel, track, part, instrument

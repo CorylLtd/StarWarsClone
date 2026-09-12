@@ -1,5 +1,12 @@
 import { POKEY_PROCESSOR_SOURCE } from './pokeyProcessor';
 
+/** The sound board's POKEY clock in Hz (MAME: 1.5 MHz crystal). */
+export const POKEY_CLOCK_HZ = 1500000;
+/** The music chips sat behind a 3.5 kHz low-pass filter on the sound board. */
+export const MUSIC_LOW_PASS_HZ = 3500;
+/** Relative level of the music chips against the effect chips. */
+export const MUSIC_GAIN = 0.9;
+
 /** One register write to one of the four chips at a sample time. */
 export interface PokeyWrite {
   at: number;
@@ -10,8 +17,10 @@ export interface PokeyWrite {
 
 /**
  * The four POKEY chips as a worklet node. Writes are scheduled by sample
- * time; `now()` gives the current sample clock so callers can place effects
- * relative to it.
+ * time; `sampleAt()` converts a context time to the worklet's sample clock
+ * so callers can place effects relative to now. Chips 0 and 1 (the effect
+ * chips) go straight out; chips 2 and 3 (the music chips) go out through the
+ * board's low-pass filter.
  */
 export class PokeyBoard {
   private node: AudioWorkletNode | null = null;
@@ -26,8 +35,17 @@ export class PokeyBoard {
     this.started = ctx.currentTime;
     const url = URL.createObjectURL(new Blob([POKEY_PROCESSOR_SOURCE], { type: 'application/javascript' }));
     this.ready = ctx.audioWorklet.addModule(url).then(() => {
-      this.node = new AudioWorkletNode(ctx, 'pokey', { outputChannelCount: [1], processorOptions: { clockHz } });
-      this.node.connect(out);
+      this.node = new AudioWorkletNode(ctx, 'pokey', { numberOfOutputs: 2, outputChannelCount: [1, 1], processorOptions: { clockHz } });
+      this.node.connect(out, 0);
+      const lowPass = ctx.createBiquadFilter();
+      lowPass.type = 'lowpass';
+      lowPass.frequency.value = MUSIC_LOW_PASS_HZ;
+      lowPass.Q.value = Math.SQRT1_2;
+      const musicGain = ctx.createGain();
+      musicGain.gain.value = MUSIC_GAIN;
+      this.node.connect(lowPass, 1);
+      lowPass.connect(musicGain);
+      musicGain.connect(out);
     });
   }
 
@@ -50,6 +68,13 @@ export class PokeyBoard {
     if (!this.node) return;
     this.node.port.postMessage({ type: 'clear', chip, channel, at: atSample });
     this.node.port.postMessage({ type: 'writes', writes: [{ at: atSample, chip, reg: channel * 2 + 1, value: 0 }] });
+  }
+
+  /** Drop everything queued for a whole chip from a time on, and silence all four channels there. */
+  clearChip(chip: number, atSample: number): void {
+    if (!this.node) return;
+    this.node.port.postMessage({ type: 'clear', chip, at: atSample });
+    this.node.port.postMessage({ type: 'writes', writes: [1, 3, 5, 7].map((reg) => ({ at: atSample, chip, reg, value: 0 })) });
   }
 
   reset(): void {

@@ -14,15 +14,17 @@ for exactly what the recreation does and does not take from the original.
 
 ## Status
 
-Milestone 6 of 9: everything a player sees is in, and the sound effects are
-back. The attract cycles the high-score table, the banner with its receding
-logo and storyline, the flight instructions and the scoring page on the
-original's clock; a game runs the Dogfight, the Surface and the Trench
-through the Death Star's destruction and on to the next wave by the
+Milestone 7 of 9: everything a player sees is in, and so are the sound
+effects and the music. The attract cycles the high-score table, the banner
+with its receding logo and storyline, the flight instructions and the scoring
+page on the original's clock; a game runs the Dogfight, the Surface and the
+Trench through the Death Star's destruction and on to the next wave by the
 original's rules; a qualifying score signs the table with the yoke, and the
 top three rows persist as the cabinet's NVRAM did. Every effect is the
 original sound board's own register sequence played through a model of its
-four POKEY chips. Music and speech are still to come.
+four POKEY chips, and the music cues play at the original's cue points
+through the original's music driver logic, as compositions of our own. Speech
+is still to come.
 
 ## Running it
 
@@ -42,7 +44,9 @@ Open the game with `?mute` on the URL to run without audio, `?nobloom` to see
 the raw lines, or `?bloom=strength,radius,threshold` to tune the glow. In dev
 builds the live game state is exposed as `window.__sw`, the sound engine as
 `window.__swSound`, the renderer as `window.__swWorld`, and
-`window.__swEnterStage(stage, wave)` jumps straight into a stage.
+`window.__swEnterStage(stage, wave)` jumps straight into a stage;
+`window.__swSound.playMusic(cue)` plays a cue after a click, and
+`window.__swRenderMusic(cue)` renders one offline and reports its level.
 
 ## Audio
 
@@ -53,8 +57,16 @@ AudioWorklet: per-channel dividers on the chip's clock selections, the 4-,
 flip-flops, and 4-bit volumes. `src/audio/effects.ts` holds every effect as
 the register writes the sound CPU's sequencer made, beat by beat, traced from
 its tables; `src/audio/sound.ts` schedules them by sample time when the game
-raises a sound event. The `AudioContext` is created lazily on the first key
-or pointer event, because browsers refuse to start audio without a gesture.
+raises a sound event. The music takes the other two chips as four 16-bit
+voices behind a 3.5 kHz low-pass, as on the board: `src/audio/music.ts`
+mirrors the sound board's music driver (duration accounting, amplitude and
+frequency envelopes, ties, glides, key offsets) over a small note notation,
+and `src/audio/musicCues.ts` holds the cues. Those cues are original
+compositions: the original's music tables encode the film score, so only the
+cue points, lengths, tempi and voice roles are kept (see
+`docs/reference/music-player.md`). The `AudioContext` is created lazily on the
+first key or pointer event, because browsers refuse to start audio without a
+gesture.
 
 ## How the code is organised
 
@@ -64,7 +76,7 @@ src/
   input/    mouse, gamepad and keyboard -> one yoke snapshot
   render/   Three.js scene that draws a GameState
   ui/       DOM overlays: screen frame, HUD, attract and game-over cards
-  audio/    Web Audio synthesis (POKEY, TMS5220 speech, music to come)
+  audio/    Web Audio synthesis: the POKEY model, effects and music (TMS5220 speech to come)
   main.ts   wires everything together and runs the fixed-step frame loop
 ```
 

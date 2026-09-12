@@ -1,14 +1,17 @@
 import { COMPOUND, EFFECTS, type Effect } from './effects';
-import { PokeyBoard, type PokeyWrite } from './pokey';
+import { compileCue, MUSIC_AUDCTL, MUSIC_CHIPS, STEP_HZ, type MusicTrack } from './music';
+import { MUSIC_CUES } from './musicCues';
+import { PokeyBoard, POKEY_CLOCK_HZ, type PokeyWrite } from './pokey';
 
-/** The sound board's POKEY clock in Hz (MAME: 1.5 MHz crystal). */
-export const POKEY_CLOCK_HZ = 1500000;
+export { POKEY_CLOCK_HZ };
 
 /**
  * The sound engine: four modelled POKEY chips driven by the original's effect
- * tables. Effects are scheduled as timed register writes; a new effect on a
- * channel cancels what was queued there unless a higher-priority effect is
- * still playing.
+ * tables and by our own music cues. Effects are scheduled as timed register
+ * writes; a new effect on a channel cancels what was queued there unless a
+ * higher-priority effect is still playing. Music has the other two chips to
+ * itself, and a new cue replaces whatever cue was playing, as the original's
+ * driver did.
  */
 export class SoundEngine {
   private context: AudioContext | null = null;
@@ -17,6 +20,9 @@ export class SoundEngine {
   /** For each chip and channel, the priority and end time of the effect occupying it. */
   private readonly busy: { priority: number; until: number }[][] = [0, 1, 2, 3].map(() => [0, 1, 2, 3].map(() => ({ priority: 0, until: 0 })));
   private readonly looping = new Map<string, boolean>();
+  private readonly tracks = new Map<string, MusicTrack>();
+  /** The cue playing on the music chips and when it ends, in context time. */
+  private music: { cue: string; until: number } | null = null;
   muted = false;
 
   /** Browsers refuse to start audio without a user gesture; call from a key or pointer handler. */
@@ -51,6 +57,39 @@ export class SoundEngine {
     this.looping.set(name, on);
     if (on) this.start(name, effect, this.context.currentTime + 0.02);
     else this.stop(effect, this.context.currentTime + 0.02);
+  }
+
+  /** Play a music cue now on the music chips, cutting off any cue still playing. Unknown cues are ignored. */
+  playMusic(cue: string): void {
+    if (!this.board || !this.context || this.muted) return;
+    const track = this.track(cue);
+    if (!track) return;
+    const at = this.context.currentTime + 0.02;
+    const start = this.board.sampleAt(at);
+    const samplesPerStep = this.context.sampleRate / STEP_HZ;
+    const writes: PokeyWrite[] = [];
+    for (const chip of MUSIC_CHIPS) {
+      this.board.clearChip(chip, start);
+      writes.push({ at: start, chip, reg: 8, value: MUSIC_AUDCTL });
+    }
+    for (const w of track.writes) writes.push({ at: start + Math.round(w.t * samplesPerStep), chip: w.chip, reg: w.reg, value: w.value });
+    this.board.write(writes);
+    this.music = { cue, until: at + track.length / STEP_HZ };
+  }
+
+  /** The cue currently sounding, if any. */
+  musicPlaying(): string | null {
+    if (!this.music || !this.context || this.context.currentTime >= this.music.until) return null;
+    return this.music.cue;
+  }
+
+  private track(cue: string): MusicTrack | null {
+    let track = this.tracks.get(cue) ?? null;
+    if (!track && MUSIC_CUES[cue]) {
+      track = compileCue(MUSIC_CUES[cue]);
+      this.tracks.set(cue, track);
+    }
+    return track;
   }
 
   private start(name: string, effect: Effect, at: number): void {

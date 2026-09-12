@@ -1,6 +1,8 @@
 import { SoundEngine } from './audio/sound';
 import { PokeyBoard } from './audio/pokey';
 import { COMPOUND, EFFECTS } from './audio/effects';
+import { compileCue, STEP_HZ } from './audio/music';
+import { MUSIC_CUES } from './audio/musicCues';
 import { POKEY_CLOCK_HZ } from './audio/sound';
 import { DT } from './game/config';
 import { createInitialState, defaultHighScores } from './game/state';
@@ -105,6 +107,48 @@ if (import.meta.env.DEV) {
     }
     return { seconds: Number(seconds.toFixed(2)), peak: Number(peak.toFixed(3)), pitchPer100ms: pitches };
   };
+  // Render one music cue offline and describe it: length, peak level and the RMS level of each second.
+  (window as unknown as { __swRenderMusic: (name: string) => Promise<unknown> }).__swRenderMusic = async (name: string) => {
+    const track = compileCue(MUSIC_CUES[name]);
+    const seconds = track.length / STEP_HZ + 0.2;
+    const off = new OfflineAudioContext(1, Math.ceil(48000 * seconds), 48000);
+    const board = new PokeyBoard(off, off.destination, POKEY_CLOCK_HZ);
+    await board.whenReady();
+    const spt = 48000 / STEP_HZ;
+    board.write([2, 3].map((chip) => ({ at: 0, chip, reg: 8, value: 0x78 })));
+    board.write(track.writes.map((w) => ({ at: Math.round(w.t * spt), chip: w.chip, reg: w.reg, value: w.value })));
+    await new Promise((r) => setTimeout(r, 200));
+    const d = (await off.startRendering()).getChannelData(0);
+    let peak = 0;
+    const rmsPerSecond: number[] = [];
+    for (let start = 0; start < d.length; start += 48000) {
+      let sum = 0;
+      const end = Math.min(d.length, start + 48000);
+      for (let i = start; i < end; i++) {
+        peak = Math.max(peak, Math.abs(d[i]));
+        sum += d[i] * d[i];
+      }
+      rmsPerSecond.push(Number(Math.sqrt(sum / (end - start)).toFixed(3)));
+    }
+    return { seconds: Number((track.length / STEP_HZ).toFixed(2)), writes: track.writes.length, peak: Number(peak.toFixed(3)), rmsPerSecond };
+  };
+  // Offline self-test of the 16-bit join: a pure tone on a joined pair at the chip clock should measure clock / (2 * (N + 7)) Hz.
+  (window as unknown as { __swPokeyTest16: (divider: number) => Promise<number> }).__swPokeyTest16 = async (divider: number) => {
+    const off = new OfflineAudioContext(1, 48000, 48000);
+    const board = new PokeyBoard(off, off.destination, POKEY_CLOCK_HZ);
+    await board.whenReady();
+    board.write([
+      { at: 0, chip: 3, reg: 8, value: 0x78 },
+      { at: 0, chip: 3, reg: 0, value: divider & 0xff },
+      { at: 0, chip: 3, reg: 2, value: divider >> 8 },
+      { at: 0, chip: 3, reg: 3, value: 0xaf },
+    ]);
+    await new Promise((r) => setTimeout(r, 200));
+    const d = (await off.startRendering()).getChannelData(0);
+    let crossings = 0;
+    for (let i = 1; i < d.length; i++) if ((d[i - 1] < 0) !== (d[i] < 0)) crossings += 1;
+    return crossings / 2;
+  };
   // Offline self-test of the POKEY model: a pure tone at AUDF 0x28 on the 64 kHz clock should measure about 64000 / (2 * 41) Hz.
   (window as unknown as { __swPokeyTest: () => Promise<number> }).__swPokeyTest = async () => {
     const off = new OfflineAudioContext(1, 48000, 48000);
@@ -149,6 +193,9 @@ function dispatch(event: GameEvent): void {
       break;
     case 'passby':
       sound.play(event.receding ? 'passbyRecede' : 'passby');
+      break;
+    case 'music':
+      sound.playMusic(event.cue);
       break;
     case 'gameOver':
       saveHighScore(state.highScore);
