@@ -459,8 +459,9 @@ export class WorldRenderer {
   private drawGameOverGrowing(state: GameState): void {
     const t = Math.min(1, state.modeFrames / 32);
     const scale = 0.5 + 1.5 * t;
+    // Message GO1 (TCMES.MAC): red at full brightness; the attract's small GAME OVER is the turquoise one.
     const text = 'GAME OVER';
-    drawText(this.flat, text, -textWidth(text, scale) / 2, -12 * scale, vgColor('TRQ'), scale);
+    drawText(this.flat, text, -textWidth(text, scale) / 2, -12 * scale, vgColor('RED', 0xff), scale);
   }
 
   private drawSelect(state: GameState): void {
