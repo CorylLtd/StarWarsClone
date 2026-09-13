@@ -365,15 +365,19 @@ export class WorldRenderer {
           for (const stroke of tips) this.flat.polyline(stroke, flash, cx + tip[0] * factor, cy + tip[1] * factor, factor);
         }
       } else if (fb.kind === 'hurt') {
+        // GN1DRW: the hurt stamp is drawn one binary scale smaller than the shot was (its stamps are
+        // three times larger), clamped between binary 3 and 6 so it never fills the screen or vanishes.
         const purple = vgColor('PRP', Math.min(0xff, 16 * fb.timer + 0x0f));
-        const hf = Math.min(2, Math.max(1 / 8, factor * 2));
+        const hf = Math.min(1 / 2, Math.max(1 / 16, factor / 2));
         const tips = FIREBALL_TIPS[this.frame % 4];
         for (const tip of FIREBALL_HURT_TIPS[this.frame % 4]) {
           for (const stroke of tips) this.flat.polyline(stroke, purple, cx + tip[0] * hf, cy + tip[1] * hf, hf);
         }
       } else {
+        // GLOWVW: the splash on the windshield ignores the distance. Its scale word is binary 0 with
+        // linear timer*16, so it starts small and expands past the screen edges as it fades.
         const white = vgColor('WHT', Math.min(0xff, 16 * fb.timer));
-        const gf = (factor * fb.timer) / 15;
+        const gf = 4 * (1 - fb.timer / 16);
         const tips = FIREBALL_TIPS[this.frame % 4];
         for (const tip of FIREBALL_HURT_TIPS[this.frame % 4]) {
           for (const stroke of tips) this.flat.polyline(stroke, white, cx + tip[0] * gf, cy + tip[1] * gf, gf);

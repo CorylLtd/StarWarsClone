@@ -44,8 +44,19 @@ export function view(state: GameState, lasersActive: boolean): void {
 
   for (let i = 0; i < d.fireballs.length; i++) {
     const fb = d.fireballs[i];
-    if (!fb || fb.kind !== 'live') continue;
+    if (!fb || fb.kind === 'glow') continue;
     const proj = projectRelative(fb.pos, p.basis);
+    if (fb.kind === 'hurt') {
+      // A shot dissolving where the laser caught it still turns with the view; out of view it is
+      // merely not drawn (VWGUN only discards live shots).
+      if (proj) {
+        fb.at = proj.at;
+        fb.halfDistance = proj.view.x / 2;
+      } else {
+        fb.halfDistance = 0;
+      }
+      continue;
+    }
     if (!proj) {
       d.fireballs[i] = null;
       continue;

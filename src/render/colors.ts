@@ -25,14 +25,19 @@ const ALIASES: Record<string, string> = {
 /** The flash colour cycle: colours 1..7 in order, one per field. */
 export const FLASH_CYCLE = ['BLU', 'GRN', 'TRQ', 'RED', 'PRP', 'YLW', 'WHT'];
 
-/** A colour name plus luminance (0..255, 128 normal) as an RGB triple. Luminance above normal pushes toward white. */
+/** How far a colour at maximum luminance (0xFF) is pushed toward white. The hardware only
+ * brightens; a hint of whitening stands in for the phosphor overdrive, but it must stay small
+ * enough that a full-brightness red fireball still reads as red, as it does in MAME. */
+const OVERDRIVE_WHITENING = 0.2;
+
+/** A colour name plus luminance (0..255, 128 normal) as an RGB triple. Luminance above normal pushes slightly toward white. */
 export function vgColor(name: string, lum = 0x80): THREE.Color {
   const key = ALIASES[name.toUpperCase()] ?? name.toUpperCase();
   const [r, g, b] = BASE[key] ?? BASE.WHT;
   const l = lum / 0x80;
   if (l <= 1) return new THREE.Color(r * l, g * l, b * l);
-  const t = Math.min(1, (l - 1) / 1);
-  return new THREE.Color(r + (1 - r) * t * 0.6, g + (1 - g) * t * 0.6, b + (1 - b) * t * 0.6);
+  const t = Math.min(1, l - 1) * OVERDRIVE_WHITENING;
+  return new THREE.Color(r + (1 - r) * t, g + (1 - g) * t, b + (1 - b) * t);
 }
 
 /** The alien glow table TVWCL indexed by frames of glow left (31..0): white flashes fading over green. */

@@ -189,7 +189,7 @@ roll and glow, and flings the ship.
   (`GNB0..3`, M.=5, Y×3/2, cycled every 4 frames); at five of the spoke tips a flash-colour word
   (`VRFLS`, cycles colours 1..7 at FF every frame) and a small pinwheel (`GNT0..3`, M.=10, cycled every
   frame) are stamped. Hurt shots use `GNX0..3` (tips only) in PURPLE; a shot that hits the windshield is
-  re-stamped WHITE at its last screen position, shrinking over 15 frames (`GLOWVW`), and the whole screen
+  re-stamped WHITE at its last screen position, expanding from a quarter size to almost four times normal while fading over 15 frames (`GLOWVW`), and the whole screen
   frame flashes white (`VWGLW`, `VJFCWN` box at scale 7100).
 * **Stars**: 50 random 3-D points in mathbox RAM, transformed with PRE2 each frame using the player's
   matrix (translation replaced by the slower `ST.UX/UY/UZ`), drawn as white intensity-7 dots

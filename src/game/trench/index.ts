@@ -30,7 +30,9 @@ export function enterTrench(state: GameState, fromSurface: boolean, repeat = fal
   state.player.rollFrames = 0;
   state.dogfight.fireballs = [null, null, null, null, null, null];
   resetLayout(state, repeat);
-  if (!repeat) state.events.push({ type: 'speech', line: 'USE THE FORCE, LUKE' });
+  // The original speaks the line once, when the transition into the trench begins: the surface
+  // stage queues it as the drop starts, so only the space-to-trench entry queues it here.
+  if (!repeat && !fromSurface) state.events.push({ type: 'speech', line: 'USE THE FORCE, LUKE' });
 }
 
 /** One game frame of the trench and what follows it. Returns true when the next wave should begin. */

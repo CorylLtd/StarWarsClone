@@ -80,6 +80,20 @@ describe('surface flow', () => {
     expect(more).toBe(2 * SURFACE.transitionFrames);
   });
 
+  it('asks Luke to use the Force exactly once between the surface and the trench', () => {
+    const state = surfaceState(2);
+    const lines: string[] = [];
+    let frames = 0;
+    while (state.stage === 'surface' && frames < 1200) {
+      state.shields = 6;
+      for (const e of runFrames(state, 1)) if (e.type === 'speech') lines.push(e.line);
+      frames += 1;
+    }
+    expect(state.stage).toBe('trench');
+    for (const e of runFrames(state, 5)) if (e.type === 'speech') lines.push(e.line);
+    expect(lines.filter((l) => l === 'USE THE FORCE, LUKE')).toHaveLength(1);
+  });
+
   it('the yoke moves the ship sideways and down and banks the view', () => {
     const state = surfaceState(2);
     runFields(state, 200, { x: 1, y: -1, fire: false });
