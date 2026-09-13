@@ -338,10 +338,10 @@ export const STARS = {
   brightness: 0x80,
 };
 
-/** Factory-default operator option settings (SWOPTS.DOC, MAME's DSW defaults). */
+/** Operator option settings at the manufacturer's recommended values (SWOPTS.DOC: 7 starting shields, Moderate difficulty, 1 bonus shield per Death Star). */
 export const OPTIONS = {
-  startingShields: 6,
-  playDifficulty: 0 as 0 | 1 | 2 | 3,
+  startingShields: 7,
+  playDifficulty: 1 as 0 | 1 | 2 | 3,
   bonusShieldsPerDeathStar: 1,
   attractMusicIntervalSeconds: 7 * 60,
 };
