@@ -81,7 +81,6 @@ export class WorldRenderer {
   private readonly flat: LineSet;
   private readonly stars: THREE.Points;
   private readonly starPositions: Float32Array;
-  private readonly flash: THREE.Mesh;
   /** Buildings and fragments of the surface, rebuilt every frame in camera-relative coordinates. */
   private readonly ground: LineSet;
   private readonly groundDots: THREE.Points;
@@ -141,13 +140,6 @@ export class WorldRenderer {
     this.stars = new THREE.Points(starGeom, new THREE.PointsMaterial({ color: 0xc8c8dc, size: 2.5, sizeAttenuation: false }));
     this.stars.frustumCulled = false;
     this.overlay.add(this.stars);
-
-    this.flash = new THREE.Mesh(
-      new THREE.PlaneGeometry(VG.halfWidth * 2, VG.halfHeight * 2),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22 }),
-    );
-    this.flash.visible = false;
-    this.overlay.add(this.flash);
 
     const pixelRatio = this.renderer.getPixelRatio();
     const target = new THREE.WebGLRenderTarget(width * pixelRatio, height * pixelRatio, {
@@ -246,7 +238,8 @@ export class WorldRenderer {
       this.drawAttract(state);
     }
     f.end();
-    this.flash.visible = playing && p.flashFrames > 0 && p.flashFrames % 4 !== 0;
+    // The original's shield-hit "backlight" (VWGLW) is a max-white box drawn at twice normal scale,
+    // entirely off the visible area; it only lit a real CRT, and MAME shows nothing, so neither do we.
 
     this.renderer.clear();
     this.composer.render();

@@ -294,7 +294,7 @@ For each visible live shot, after computing its screen centre (`BJ.CX/CY`) and h
 ### 6.4 Effect on the player (`GNAHIT`)
 
 * Shot becomes `TYP$GL` ("glowing against the shields"): stays at its screen position, white sparkler `VJGNX` (the five tip pinwheels, no spokes) drawn with scale word binary 0, linear `G$TMR×16` and brightness `G$TMR×16`, so it starts small (linear 0xF0 ≈ a quarter of normal size) and **expands** past the screen edges as it fades over **15 frames** (`G$TMR = 0x0F`). It ignores the shot's distance.
-* `BG1GLW`: if `GS.GLW == 0` (previous hit fully processed) → `S.GLW = 0x10` (**16 frames**) of full-screen white flash box (`VWGLW` draws `VJFCWN` at max white whenever `S.GLW & 3 ≠ 0`, i.e. 3 of every 4 frames), and `GS.GLW = 1` → shield loss (§8).
+* `BG1GLW`: if `GS.GLW == 0` (previous hit fully processed) → `S.GLW = 0x10` (**16 frames**) of full-screen white flash box (`VWGLW` draws `VJFCWN` at max white whenever `S.GLW & 3 ≠ 0`, i.e. 3 of every 4 frames; the box is drawn at scale 0x7100, twice normal, so its edges lie outside the visible area and only "backlit" a real CRT: MAME shows nothing, and the clone draws nothing), and `GS.GLW = 1` → shield loss (§8).
 * Forced roll: `S.ROL = ±0x20` (sign random if not already rolling) → `S1TW` rolls the view **4.48°/frame for 32 frames ≈ 143°**, and it is *not* un-rolled afterwards (the auto-aim only corrects yaw/pitch).
 * Sound `AUDSH`. First hit of the game (`Q.GHIT`) with shields > 3: speech **"I'M HIT BUT NOT BAD, R2 SEE WHAT YOU CAN DO WITH IT"** (`SPKHIT`, only if nothing pending) + R2 sound `AUDRS`.
 
