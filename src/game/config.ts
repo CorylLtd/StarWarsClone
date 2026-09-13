@@ -40,13 +40,15 @@ export const PACE = {
   dogfightNearHalfDistance: 2500,
   /** The turn toward the Death Star draws it large; the zoom that follows ran at the full rate. */
   dogfightApproach: 0.091,
-  surface: 0.06,
+  /** The surface as a cabinet recording times it: its fixed run in about 46 s, 13.5 frames a second. */
+  surface: 0.074,
   trench: 0.071,
   /** The pull-away (42 frames in 3.0 s) and the ring explosion (119 frames in 4.75 s), from a cabinet recording. */
   deathStarPullAway: 0.071,
   deathStarExplosion: 0.04,
   nextWave: 0.05,
-  dying: 0.08,
+  /** The 40-frame death sequence in about 2.75 s, from the same recording. */
+  dying: 0.069,
 };
 
 /** The vector generator's screen. */
