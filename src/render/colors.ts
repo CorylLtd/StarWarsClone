@@ -25,6 +25,26 @@ const ALIASES: Record<string, string> = {
 /** The flash colour cycle: colours 1..7 in order, one per field. */
 export const FLASH_CYCLE = ['BLU', 'GRN', 'TRQ', 'RED', 'PRP', 'YLW', 'WHT'];
 
+/** The monitor's colours as a cabinet recording measures them: pure primaries, no softening. */
+const PURE: Record<string, [number, number, number]> = {
+  OFF: [0, 0, 0],
+  BLU: [0, 0.05, 0.93],
+  GRN: [0, 0.85, 0],
+  TRQ: [0, 0.92, 1],
+  RED: [1, 0.03, 0],
+  PRP: [1, 0.05, 1],
+  YLW: [1, 0.9, 0],
+  WHT: [1, 1, 1],
+};
+
+/** A colour at its full saturation, scaled by luminance (0..255, 255 full) without any push toward white. The fireball stamps use this: on the original they are the most vivid thing on screen. */
+export function pureColor(name: string, lum = 0xff): THREE.Color {
+  const key = ALIASES[name.toUpperCase()] ?? name.toUpperCase();
+  const [r, g, b] = PURE[key] ?? PURE.WHT;
+  const l = Math.max(0, Math.min(1, lum / 0xff));
+  return new THREE.Color(r * l, g * l, b * l);
+}
+
 /** How far a colour at maximum luminance (0xFF) is pushed toward white. The hardware only
  * brightens; a hint of whitening stands in for the phosphor overdrive, but it must stay small
  * enough that a full-brightness red fireball still reads as red, as it does in MAME. */

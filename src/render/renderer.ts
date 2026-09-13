@@ -36,7 +36,7 @@ import { toView } from '../game/frame';
 import type { Alien, GameEvent, GameState } from '../game/types';
 import { selectTarget } from '../game/update';
 import { ArcadeCamera } from './arcadeCamera';
-import { alienGlowColor, explosionColor, FLASH_CYCLE, gaugeColorName, vgColor } from './colors';
+import { alienGlowColor, explosionColor, FLASH_CYCLE, gaugeColorName, pureColor, vgColor } from './colors';
 import { LineMaterials, linesFromEdges } from './lines';
 import { LineSet } from './lineSet';
 import { modelEdges, placeFromOriginal } from './models';
@@ -350,17 +350,17 @@ export class WorldRenderer {
       const factor = Math.min(4, Math.max(1 / 64, 512 / Math.max(1, fb.halfDistance)));
       if (fb.kind === 'live') {
         const base = FIREBALL_BASES[Math.floor(this.frame / 4) % 4];
-        const red = vgColor('RED', 0xff);
+        const red = pureColor('RED');
         for (const stroke of base) this.flat.polyline(stroke, red, cx, cy, factor);
         const tips = FIREBALL_TIPS[this.frame % 4];
-        const flash = vgColor(FLASH_CYCLE[this.frame % 7], 0xff);
+        const flash = pureColor(FLASH_CYCLE[this.frame % 7]);
         for (const tip of FIREBALL_FUSE_TIPS[Math.floor(this.frame / 4) % 4]) {
           for (const stroke of tips) this.flat.polyline(stroke, flash, cx + tip[0] * factor, cy + tip[1] * factor, factor);
         }
       } else if (fb.kind === 'hurt') {
         // GN1DRW: the hurt stamp is drawn one binary scale smaller than the shot was (its stamps are
         // three times larger), clamped between binary 3 and 6 so it never fills the screen or vanishes.
-        const purple = vgColor('PRP', Math.min(0xff, 16 * fb.timer + 0x0f));
+        const purple = pureColor('PRP', 16 * fb.timer + 0x0f);
         const hf = Math.min(1 / 2, Math.max(1 / 16, factor / 2));
         const tips = FIREBALL_TIPS[this.frame % 4];
         for (const tip of FIREBALL_HURT_TIPS[this.frame % 4]) {
@@ -369,7 +369,7 @@ export class WorldRenderer {
       } else {
         // GLOWVW: the splash on the windshield ignores the distance. Its scale word is binary 0 with
         // linear timer*16, so it starts small and expands past the screen edges as it fades.
-        const white = vgColor('WHT', Math.min(0xff, 16 * fb.timer));
+        const white = pureColor('WHT', 16 * fb.timer);
         const gf = 4 * (1 - fb.timer / 16);
         const tips = FIREBALL_TIPS[this.frame % 4];
         for (const tip of FIREBALL_HURT_TIPS[this.frame % 4]) {
