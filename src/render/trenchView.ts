@@ -152,7 +152,9 @@ export function drawDeathStarEnd(state: GameState, flat: LineSet, frame: number)
     return;
   }
   if (t.phase === 'explosion3') {
-    for (const s of DEATH_STAR_MINI) flat.polyline(s.points, vgColor(s.color, s.lum), cx, cy, 1);
+    // The miniature (VJBMIN) is drawn only by VEWDX2, the single frame that starts the burst; the
+    // DX3 frames that follow draw nothing but the circles and rings.
+    if (t.burstPhase === 0 && t.frame === 0) for (const s of DEATH_STAR_MINI) flat.polyline(s.points, vgColor(s.color, s.lum), cx, cy, 1);
     // Every circle is the Death Star's 16-segment outline (raw radius 1600) at a vector-generator
     // scale word: radius = 1600 * 2^(2 - binary) * (256 - linear) / 256, one word step apart.
     const circle = (word: number, color: THREE.Color): void => {
