@@ -19,7 +19,7 @@ import { LOGO, LOGO_VANISHING_POINT } from '../data/logo';
 import { ATTRACT, OPTIONS } from '../game/config';
 import { storyLineScale } from '../game/attract';
 import type { GameState } from '../game/types';
-import { FLASH_CYCLE, vgColor } from './colors';
+import { FLASH_CYCLE, pureColor, vgColor } from './colors';
 import type { LineSet } from './lineSet';
 import { drawNumber, drawText } from './text';
 
@@ -147,7 +147,9 @@ function drawBanner(state: GameState, flat: LineSet): void {
     const lum = n < ATTRACT.logoFixedUntil ? Math.min(0xd5, 0x18 + 3 * n) : (0xff - n + 0x18) & 0xff;
     const f = 0.5 * ((256 - linear) / 256);
     for (const stroke of LOGO) {
-      const color = vgColor('BLU', Math.round((lum * stroke.intensity) / 7));
+      // The logo's own ramp spans the whole intensity range (0x18 up to 0xD5), so it is scaled over
+      // 0..255 rather than treating 0x80 as full: a deep blue that brightens, then dims as it recedes.
+      const color = pureColor('BLU', (lum * stroke.intensity) / 7);
       flat.polyline(stroke.points, color, vp.x, vp.y, f);
     }
   }
