@@ -124,7 +124,8 @@ export function drawAttractScreen(state: GameState, flat: LineSet, frame: number
       const shown = Math.floor(a.frame / ATTRACT.pageLineEvery) + 1;
       const fade = a.frame - ATTRACT.pageRevealFrames;
       const lum = fade > 0 ? Math.max(0x0f, 0x80 - fade) : 0x80;
-      const yOffset = a.phase === 'scoring' ? Math.max(0, ATTRACT.scoringScroll - a.frame * ATTRACT.scoringScrollPerFrame) : 0;
+      // VWPAGE subtracts PH.YOF (960, down 8 a frame) from every message, so the page rises from below.
+      const yOffset = a.phase === 'scoring' ? -Math.max(0, ATTRACT.scoringScroll - a.frame * ATTRACT.scoringScrollPerFrame) : 0;
       for (let i = 0; i < Math.min(shown, page.length); i++) {
         drawMessage(flat, page[i], frame, lum, yOffset);
         if (a.phase === 'instructions' && i === 3) {
