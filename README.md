@@ -98,8 +98,9 @@ src/
   ui/       DOM overlays: screen frame, HUD, attract and game-over cards
   audio/    Web Audio synthesis: the POKEY model, effects, music, the TMS5220 model and speech
   data/     generated tables: vector ROM shapes, stage layouts, encoded speech
-  scripts/  offline tools: the speech encoder
   main.ts   wires everything together and runs the fixed-step frame loop
+scripts/    offline tools: the speech encoder and the local-only extractors
+docs/       the programmer's guide (VitePress), the reference notes and the ADRs
 ```
 
 `src/game` knows nothing about rendering or sound. It works in the original's
@@ -121,7 +122,9 @@ sets in `choreography.ts`. The notes those were derived from are in
 `docs/reference`.
 
 The vocabulary used throughout the code follows the arcade's own manuals; see
-[CONTEXT.md](CONTEXT.md).
+[CONTEXT.md](CONTEXT.md). A programmer's guide to how it all fits together is
+in `docs/`: `npm run docs:dev` serves it, `npm run docs:build` writes a static
+site to `docs/.vitepress/dist`.
 
 ## Reference material
 

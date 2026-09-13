@@ -11,7 +11,10 @@
     "test:watch": "vitest",
     "speech": "node scripts/encodeSpeech.ts",
     "music": "node scripts/extractMusic.ts",
-    "speech:original": "node scripts/extractSpeech.ts"
+    "speech:original": "node scripts/extractSpeech.ts",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "three": "0.186.0"
@@ -21,6 +24,7 @@
     "@types/three": "0.186.0",
     "typescript": "7.0.2",
     "vite": "8.3.0",
+    "vitepress": "1.6.4",
     "vitest": "5.0.0"
   }
 }

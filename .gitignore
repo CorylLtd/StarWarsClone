@@ -6,3 +6,7 @@ dist/
 local.config.json
 # Decoded from a local copy of the original's tables; never commit (ADR 0001).
 src/data/local/
+
+# VitePress build output and cache.
+docs/.vitepress/dist/
+docs/.vitepress/cache/
