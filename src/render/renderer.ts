@@ -291,7 +291,9 @@ export class WorldRenderer {
 
   private drawCursor(state: GameState): void {
     const c = state.player.cursor;
-    const color = state.mode === 'select' && selectTarget(state) >= 0 ? vgColor('YLW') : vgColor('TRQ');
+    // Yellow over a select-screen Death Star (PHESDS) and throughout initials entry (TCHSCR: "YELLOW FOR THE SITE").
+    const yellow = state.mode === 'initials' || (state.mode === 'select' && selectTarget(state) >= 0);
+    const color = yellow ? vgColor('YLW') : vgColor('TRQ');
     for (const stroke of CURSOR) this.flat.polyline(stroke, color, c.x, c.y + VG.offsetY);
   }
 
