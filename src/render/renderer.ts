@@ -462,26 +462,33 @@ export class WorldRenderer {
   }
 
   private drawSelect(state: GameState): void {
+    // Message slots MS.DS1..MS.DSZ of TCMES.MAC: left edge and baseline in VG units, plus the colour.
+    // "BONUS" is drawn twice because a .NEXTMESS slot shares the text of the .MESS that follows it.
     const f = this.flat;
-    const center = (text: string, y: number, color: THREE.Color, scale = 1): void =>
-      drawText(f, text, -textWidth(text, scale) / 2, y, color, scale);
-    center('SELECT A DEATH STAR', 360, vgColor('RED'));
-    center('FIRE LASER AT DESIRED DEATH STAR', 320, vgColor('PRP'));
+    const purple = vgColor('PRP');
+    const green = vgColor('GRN');
+    const red = vgColor('RED');
+    const blue = vgColor('BLU');
+    drawText(f, 'SELECT A DEATH STAR', -224, 340, purple);
+    drawText(f, 'FIRE LASER AT DESIRED DEATH STAR', -380, 300, purple);
+    drawText(f, 'COUNTDOWN', -104, 260, vgColor(FLASH_CYCLE[this.frame % 7], 0x80));
+    drawText(f, 'EASY', -300, 32, green);
+    drawText(f, 'MEDIUM', -68, -200, green);
+    drawText(f, 'HARD', 224, 32, green);
+    drawText(f, 'WAVE 1', -468, 200, red);
+    drawText(f, 'WAVE 3', -68, -160, red);
+    drawText(f, 'WAVE 5', 332, 200, red);
+    drawText(f, 'BONUS', -56, -400, blue);
+    drawText(f, 'BONUS', 344, 0, blue);
+    drawText(f, 'NO BONUS', -492, 0, blue);
+    drawText(f, '400,000', -80, -440, red);
+    drawText(f, '800,000', 320, -40, red);
+    // PHESDS: the count is PH.TIM/32 shown as two digits (08 down to 00) below COUNTDOWN, in the
+    // colour left by the last message drawn, which is the red 800,000.
     const countdown = Math.floor((state.selectFrames * 8) / SELECT.countdownFrames);
-    center(`COUNTDOWN ${countdown}`, 270, vgColor('GRN'));
-    const labels = [
-      ['EASY', 'WAVE 1', 'NO BONUS'],
-      ['MEDIUM', 'WAVE 3', 'BONUS 400,000'],
-      ['HARD', 'WAVE 5', 'BONUS 800,000'],
-    ];
-    for (let i = 0; i < SELECT.positions.length; i++) {
-      const pos = SELECT.positions[i];
+    drawNumber(f, countdown, -16, 200, red, 2, 2);
+    for (const pos of SELECT.positions) {
       for (const s of DEATH_STAR_MINI) f.polyline(s.points, vgColor(s.color, s.lum), pos.x, pos.y);
-      const colors = [vgColor('GRN'), vgColor('YLW'), vgColor('RED')];
-      for (let j = 0; j < labels[i].length; j++) {
-        const text = labels[i][j];
-        drawText(f, text, pos.x - textWidth(text) / 2, pos.y - 110 - j * 30, colors[i]);
-      }
     }
   }
 
