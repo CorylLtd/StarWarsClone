@@ -42,7 +42,8 @@ export const PACE = {
   dogfightApproach: 0.091,
   /** The surface as a cabinet recording times it: its fixed run in about 46 s, 13.5 frames a second. */
   surface: 0.074,
-  trench: 0.071,
+  /** The trench run in about 33 s on the cabinet recording, 13 frames a second. */
+  trench: 0.076,
   /** The pull-away (42 frames in 3.0 s) and the ring explosion (119 frames in 4.75 s), from a cabinet recording. */
   deathStarPullAway: 0.071,
   deathStarExplosion: 0.04,
