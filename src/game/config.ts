@@ -27,7 +27,10 @@ export const FIELDS_PER_FRAME = GAME_FRAME_IRQS / VG_FIELD_IRQS;
  * are estimates.
  */
 export const PACE = {
-  attract: { highScores: 0.0735, banner: 0.0488, instructions: 0.081, scoring: 0.05 },
+  /** Attract screens: the high-score table as MAME measures it; the banner, instructions and scoring
+   * pages as a cabinet recording times them (512 frames in 30 s, 434 in 27 s, the 120-frame scroll-in
+   * of the scoring page in 3 s). */
+  attract: { highScores: 0.0735, banner: 0.0586, instructions: 0.062, scoring: 0.025 },
   select: 0.0488,
   initials: 0.0735,
   /** Dogfight: this with nothing near, rising with the nearest TIE Fighter's size toward the near period. */
@@ -39,7 +42,9 @@ export const PACE = {
   dogfightApproach: 0.091,
   surface: 0.06,
   trench: 0.071,
-  deathStarExplosion: 0.083,
+  /** The pull-away (42 frames in 3.0 s) and the ring explosion (119 frames in 4.75 s), from a cabinet recording. */
+  deathStarPullAway: 0.071,
+  deathStarExplosion: 0.04,
   nextWave: 0.05,
   dying: 0.08,
 };

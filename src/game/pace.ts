@@ -39,6 +39,7 @@ export function framePeriod(state: GameState): number {
       const t = state.trench;
       if (t.phase === 'flying') return PACE.trench;
       if (t.phase === 'next') return PACE.nextWave;
+      if (t.phase === 'explosion1') return PACE.deathStarPullAway;
       return PACE.deathStarExplosion;
     }
   }
