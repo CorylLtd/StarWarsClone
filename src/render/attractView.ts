@@ -70,7 +70,7 @@ function drawTable(state: GameState, flat: LineSet, rowsY: readonly number[], sc
     const row = state.highScores[i];
     const y = rowsY[i] * scale;
     const rowColor = i === highlight ? vgColor('WHT') : color;
-    drawNumber(flat, i + 1, -200 * scale, y, rowColor, 2, 1);
+    drawNumber(flat, i + 1, -200 * scale, y, rowColor, 2, 1, scale);
     drawText(flat, '.', -200 * scale + 48 * scale, y, rowColor, scale);
     let initials = row.initials.padEnd(3, i === highlight ? '_' : ' ');
     if (i === highlight && frame % 2 === 1 && state.initials.letters.length < 3) {
