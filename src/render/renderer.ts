@@ -8,7 +8,6 @@ import type { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import {
   COCKPIT,
   COCKPIT_SHIFT,
-  DEATH_STAR_DETAIL,
   DEATH_STAR_MINI,
   GAUGE,
   GAUGE_BASE,
@@ -37,6 +36,7 @@ import type { Alien, GameEvent, GameState } from '../game/types';
 import { selectTarget } from '../game/update';
 import { ArcadeCamera } from './arcadeCamera';
 import { alienGlowColor, explosionColor, FLASH_CYCLE, gaugeColorName, pureColor, vgColor } from './colors';
+import { drawBigDeathStar } from './deathStar';
 import { LineMaterials, linesFromEdges } from './lines';
 import { LineSet } from './lineSet';
 import { modelEdges, placeFromOriginal } from './models';
@@ -392,12 +392,7 @@ export class WorldRenderer {
       for (const s of DEATH_STAR_MINI) this.flat.polyline(s.points, vgColor(s.color, s.lum), cx, cy, 0.5);
       return;
     }
-    const binary = Math.floor(d.zoomScale / 128);
-    const linear = d.zoomScale % 128;
-    const factor = Math.pow(2, 2 - binary) * ((256 - linear) / 256);
-    for (const strokes of Object.values(DEATH_STAR_DETAIL)) {
-      for (const s of strokes) this.flat.polyline(s.points, vgColor(s.color, s.lum), cx, cy, factor);
-    }
+    drawBigDeathStar(this.flat, cx, cy, d.zoomScale, state.wave);
   }
 
   private drawHud(state: GameState): void {

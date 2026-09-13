@@ -102,7 +102,10 @@ Rows: `VGRW0..7` = 552, 528, 504, 480, 456, 432, 408, 384 (24 apart); the 3-D wi
   (= grows on screen) by `DT.STP` per frame (DT.STP starts 100 and increases by 60 per frame; the linear byte
   is kept in 0..7F and borrows into the binary nibble) until `DT.SCL ≤ 7310`, while the stars dim by 2/frame.
   The detailed pictures (`M.=32`, circle radius 1600 raw units) are in the JSON under `detailedPictures`;
-  the city-light stamps `VJUB1..4/VJLB1..4` were not extracted. The select screen draws `VJBMIN` at scale
+  the city-light stamps `VJUB1..4/VJLB1..4` are decoded into `src/data/deathStarLights.ts` (dots at the
+  vertices of intensity-1 strokes, letter routines `B.*` at M.=2, stamps at M.=4 with ASPECT; drawn three
+  binary steps larger than the pictures, yellow 0x60 at binary 0 else 0x30; even `SP.WAV` = MAY THE FORCE /
+  BE WITH YOU, odd = the designers' names). The select screen draws `VJBMIN` at scale
   7200 at fixed positions (`TDTH` table); `VEWDX2` draws it at (0, VGOFFY) at scale 7200.
 
 ## 6. Windshield flash (`WSGLOW.MAC VWGLW`, `WSVROM.MAC VGFCWN`) and flash colours
@@ -128,6 +131,6 @@ Rows: `VGRW0..7` = 552, 528, 504, 480, 456, 432, 408, 384 (24 apart); the 3-D wi
 2. The `VJFCWN` last stroke and its off-screen geometry (see §6) – treat as a full-screen flash.
 3. Glyph strokes were decoded with the assembler's `.RADIX 10`; the `VCTR` short-vector encoding is lossless,
    so coordinates are exact. Blank moves inside glyphs are not kept (only visible polylines).
-4. City-light stamps (`VJUB*/VJLB*`) and the `TDTH` select-screen positions were not extracted.
+4. The `TDTH` select-screen positions were not extracted (they are (−400,100), (0,−300), (400,100)).
 5. Colour words in the cockpit stamps use default lum 80; MAME's rendering may look brighter because it
    scales by intensity 7.

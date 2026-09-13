@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CATWALK, EXHAUST_PORT, TRENCH_UNIT, WALL_GUN, WALL_PANEL, type TrenchModel } from '../data/trench';
-import { DEATH_STAR_DETAIL, DEATH_STAR_MINI } from '../data/hud';
+import { DEATH_STAR_MINI } from '../data/hud';
+import { drawBigDeathStar } from './deathStar';
 import { FIREBALL_TIPS } from '../data/vectorRom';
 import { TRENCH, VG } from '../game/config';
 import { toView, vec, type Vec } from '../game/frame';
@@ -142,13 +143,8 @@ export function drawDeathStarEnd(state: GameState, flat: LineSet, frame: number)
   const cx = 0;
   const cy = VG.offsetY;
   if (t.phase === 'explosion1') {
-    // Masked scale units: binary * 128 + linear; factor 2^(2 - b) * (256 - l) / 256, from half size shrinking away.
-    const b = Math.floor(t.dxScale / 128);
-    const l = t.dxScale % 128;
-    const factor = Math.pow(2, 2 - b) * ((256 - l) / 256);
-    for (const strokes of Object.values(DEATH_STAR_DETAIL)) {
-      for (const s of strokes) flat.polyline(s.points, vgColor(s.color, s.lum), cx, cy, factor);
-    }
+    // Masked scale units: binary * 128 + linear, from half size shrinking away.
+    drawBigDeathStar(flat, cx, cy, t.dxScale, state.wave);
     return;
   }
   if (t.phase === 'explosion3') {
