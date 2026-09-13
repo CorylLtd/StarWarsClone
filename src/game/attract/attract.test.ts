@@ -3,10 +3,35 @@ import { HIGH_SCORE_DEFAULTS } from '../../data/attract';
 import { ATTRACT } from '../config';
 import { createInitialState } from '../state';
 import { FIRE, IDLE, runFrame, runFrames } from '../testUtils';
+import { visibleStars } from '../dogfight/stars';
 import { storyLineScale } from './index';
 import { beginInitials, hoveredItem, qualifyingRow } from './highScores';
 
 describe('attract cycle', () => {
+  it('slides the stars left to right on the instructions page and downward on the scoring page', () => {
+    const drift = (phase: string): { dx: number; dy: number } => {
+      const state = createInitialState(1);
+      while (state.attract.phase !== phase) runFrame(state);
+      runFrames(state, 5);
+      const before = state.dogfight.stars.map((s) => ({ ...s.pos }));
+      const from = new Map(visibleStars(state).map((s) => [s.index, s]));
+      runFrames(state, 4);
+      let dx = 0;
+      let dy = 0;
+      for (const s of visibleStars(state)) {
+        const was = from.get(s.index);
+        const p = state.dogfight.stars[s.index].pos;
+        if (!was || p.x !== before[s.index].x || p.y !== before[s.index].y || p.z !== before[s.index].z) continue;
+        dx += s.x - was.x;
+        dy += s.y - was.y;
+      }
+      return { dx, dy };
+    };
+    expect(drift('instructions').dx).toBeGreaterThan(0);
+    expect(Math.abs(drift('instructions').dy)).toBeLessThan(drift('instructions').dx / 10);
+    expect(drift('scoring').dy).toBeLessThan(0);
+  });
+
   it('runs high scores, banner, instructions, scoring, and round again with the original timings', () => {
     const state = createInitialState(1);
     expect(state.attract.phase).toBe('highScores');

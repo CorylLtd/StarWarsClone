@@ -1,8 +1,26 @@
 import { STARS } from '../config';
-import { toView, toWorld, type Vec, vec } from '../frame';
+import { add, scale, sub, toView, toWorld, type Vec, vec } from '../frame';
 import { inCone } from '../projection';
 import { nextFloat, type Rng } from '../random';
-import type { GameState, Star } from '../types';
+import type { AttractPhase, GameState, Star } from '../types';
+
+/** How the viewer moves behind each attract screen, in body axes (WSMAIN.MAC SMVHIS, SMVBNR, SMVINS,
+ * SMVSCR): forward for the high scores, forward and up behind the banner, sideways for the
+ * instructions (the viewer slides left, so the stars cross left to right), up for the scoring page. */
+const ATTRACT_DRIFT: Record<AttractPhase, Vec> = {
+  highScores: vec(1, 0, 0),
+  banner: vec(1, 0, 1),
+  instructions: vec(0, -1, 0),
+  scoring: vec(0, 0, 1),
+};
+
+/** Where the viewer has drifted to, in universe units: 0x80 per frame on each moving axis. The dogfight
+ * slides along universe +X; the attract screens move relative to their fixed view. */
+function driftWorld(state: GameState): Vec {
+  const n = state.dogfight.frame * STARS.driftPerFrame;
+  if (state.mode === 'attract') return scale(toWorld(state.player.basis, ATTRACT_DRIFT[state.attract.phase]), n);
+  return vec(n, 0, 0);
+}
 
 /** A fresh star somewhere ahead of the viewer, in the viewer's frame; the sign of y/z is chosen by the caller. */
 function freshViewPos(rng: Rng, ySign: number, zSign: number): Vec {
@@ -24,29 +42,28 @@ export function initStars(state: GameState): void {
 /** The viewer drifts along +X for parallax; a star that leaves the visible shell is reborn on the opposite side. */
 export function stepStars(state: GameState): void {
   const p = state.player.basis;
-  const drift = vec(state.dogfight.frame * STARS.driftPerFrame, 0, 0);
+  const drift = driftWorld(state);
   for (const star of state.dogfight.stars) {
-    const view = toView(p, { x: star.pos.x - drift.x, y: star.pos.y, z: star.pos.z });
+    const view = toView(p, sub(star.pos, drift));
     const half = view.x / 2;
     if (half > STARS.minHalfDistance && half <= STARS.maxHalfDistance && inCone(view)) continue;
     const fresh = freshViewPos(state.rng, view.y >= 0 ? -1 : 1, view.z >= 0 ? -1 : 1);
-    const w = toWorld(p, fresh);
-    star.pos = vec(w.x + drift.x, w.y, w.z);
+    star.pos = add(toWorld(p, fresh), drift);
   }
 }
 
 /** Screen-space positions of the visible stars for the renderer, VG units without the offset. */
-export function visibleStars(state: GameState): { x: number; y: number }[] {
+export function visibleStars(state: GameState): { index: number; x: number; y: number }[] {
   const p = state.player.basis;
-  const driftX = state.dogfight.frame * STARS.driftPerFrame;
-  const out: { x: number; y: number }[] = [];
-  for (const star of state.dogfight.stars) {
-    const view = toView(p, { x: star.pos.x - driftX, y: star.pos.y, z: star.pos.z });
+  const drift = driftWorld(state);
+  const out: { index: number; x: number; y: number }[] = [];
+  state.dogfight.stars.forEach((star, index) => {
+    const view = toView(p, sub(star.pos, drift));
     const half = view.x / 2;
     if (half > STARS.minHalfDistance && half <= STARS.maxHalfDistance && inCone(view)) {
-      out.push({ x: (512 * view.y) / view.x, y: (512 * view.z) / view.x });
+      out.push({ index, x: (512 * view.y) / view.x, y: (512 * view.z) / view.x });
     }
-  }
+  });
   return out;
 }
 
