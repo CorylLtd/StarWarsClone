@@ -15,6 +15,12 @@ export function stepLaserTrigger(state: GameState, input: Input): void {
     state.events.push({ type: 'sound', name: 'laser' });
   }
   state.fireHeld = input.fire;
+  tickLaser(state);
+}
+
+/** The per-frame part of TSTLAZ without the trigger: a hit freeze counts down, then the bolt's remaining frames. */
+export function tickLaser(state: GameState): void {
+  const p = state.player;
   if (p.laserHit > 0) {
     p.laserHit -= 1;
     p.laserFrames = 0;

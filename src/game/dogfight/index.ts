@@ -5,7 +5,7 @@ import { spawnNextAlien, stepAliens, stepRetreat } from './aliens';
 import { chooseAimTarget, stepView } from './aim';
 import { stepExplosions } from './explosions';
 import { stepFireballs } from './guns';
-import { stepLaserTrigger } from './lasers';
+import { stepLaserTrigger, tickLaser } from './lasers';
 import { initStars, stepStars } from './stars';
 import { view } from './view';
 
@@ -81,7 +81,9 @@ export function stepDogfightFrame(state: GameState, input: Input): boolean {
       return false;
     }
     case 'turn': {
-      view(state, false);
+      // VEWHPA still runs TSTLAZ, CLSLZ and VWLAZ while the ship turns toward the Death Star.
+      stepLaserTrigger(state, input);
+      view(state, true);
       stepFireballs(state);
       stepExplosions(state);
       stepView(state, null);
@@ -96,6 +98,8 @@ export function stepDogfightFrame(state: GameState, input: Input): boolean {
       return false;
     }
     case 'zoom': {
+      // No new bolts during the zoom, but one already in flight still burns out.
+      tickLaser(state);
       stepStars(state);
       d.frame += 1;
       d.zoomScale -= d.zoomStep >> 8;

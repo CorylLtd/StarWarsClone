@@ -41,7 +41,7 @@ import { LineMaterials, linesFromEdges } from './lines';
 import { LineSet } from './lineSet';
 import { modelEdges, placeFromOriginal } from './models';
 import { drawSurface, GROUND_DOT_COLOR } from './surfaceView';
-import { drawDeathStarEnd, drawTorpedo, drawTrench, drawTrenchMessages } from './trenchView';
+import { drawDeathStarEnd, drawForceBonus, drawTorpedo, drawTrench, drawTrenchMessages } from './trenchView';
 import { drawAttractScreen, drawInitialsScreen } from './attractView';
 import { drawNumber, drawText, textWidth } from './text';
 
@@ -212,7 +212,8 @@ export class WorldRenderer {
       if (inSpace) this.drawDeathStar(state);
       if (!afterTrench) {
         this.drawFireballs(state);
-        this.drawLasers(state);
+        // VEWHPB, the zoom into the Death Star, is the one playing view without VWLAZ.
+        if (!(inSpace && state.dogfight.phase === 'zoom')) this.drawLasers(state);
         this.drawCockpit(state);
         if (state.mode === 'playing') this.drawCursor(state);
       }
@@ -224,7 +225,8 @@ export class WorldRenderer {
       }
       if (afterTrench) {
         drawDeathStarEnd(state, this.flat, this.frame);
-        if (state.trench.force === 1 && state.trench.phase === 'explosion1') drawTrenchMessages(state, this.flat, this.frame);
+        // VEWDX1 shows only the Force bonus over the receding Death Star, not the trench hints.
+        if (state.trench.phase === 'explosion1') drawForceBonus(state, this.flat, this.frame);
       }
       if (state.mode === 'dying') this.drawGameOverGrowing(state);
     } else if (state.mode === 'select') {

@@ -214,15 +214,21 @@ export function drawDeathStarEnd(state: GameState, flat: LineSet, frame: number)
   void textWidth;
 }
 
+/** The earned Force bonus on row VGRW7 (WSGAS.MAC VWFRC): six digits then the message, in the cycling colour. */
+export function drawForceBonus(state: GameState, flat: LineSet, frame: number): void {
+  const t = state.trench;
+  if (t.force !== 1) return;
+  const cycling = vgColor(FLASH_CYCLE[frame % 7], 0x80);
+  drawNumber(flat, t.forceBonus, -320, 384, cycling, 6, 1);
+  drawText(flat, ' FOR USING THE FORCE', -320 + 6 * 24 + 4, 384, cycling);
+}
+
 /** Trench messages: the Force, the port, the first-wave hints and the miss. */
 export function drawTrenchMessages(state: GameState, flat: LineSet, frame: number): void {
   const t = state.trench;
   const cycling = vgColor(FLASH_CYCLE[frame % 7], 0x80);
   if (t.force === 0) drawText(flat, 'USE THE FORCE', -152, 336, cycling);
-  if (t.force === 1) {
-    drawNumber(flat, t.forceBonus, -320, 384, cycling, 6, 1);
-    drawText(flat, ' FOR USING THE FORCE', -320 + 6 * 24 + 4, 384, cycling);
-  }
+  drawForceBonus(state, flat, frame);
   if (t.missedFrames > 0) drawText(flat, 'EXHAUST PORT MISSED', -448, 312, cycling, 2);
   const tim = Math.floor(t.frame / TRENCH.pseudoSecondFrames);
   if (state.firstWave && t.repeat === 0 && tim < 8) {

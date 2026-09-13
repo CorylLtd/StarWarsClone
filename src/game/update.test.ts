@@ -117,6 +117,24 @@ describe('dogfight flow', () => {
 });
 
 describe('lasers and shields', () => {
+  it('a bolt fired as the ship turns toward the Death Star still burns out, and one in flight ends during the zoom', () => {
+    const state = dogfightState();
+    state.dogfight.aliens = [null, null, null];
+    state.dogfight.phase = 'turn';
+    pressFire(state);
+    expect(state.player.laserFrames).toBeGreaterThan(0);
+    runFrames(state, 12);
+    expect(state.player.laserFrames).toBe(0);
+    state.dogfight.phase = 'zoom';
+    state.dogfight.zoomScale = 0x2000;
+    state.dogfight.zoomStep = 0x100;
+    state.player.laserFrames = 8;
+    runFrames(state, 3);
+    expect(state.player.laserFrames).toBe(5);
+    runFrames(state, 10);
+    expect(state.player.laserFrames).toBe(0);
+  });
+
   it('a press fires a bolt that lasts eight frames and alternates gun pairs', () => {
     const state = dogfightState();
     const first = state.player.laserLeftPair;
