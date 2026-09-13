@@ -4,7 +4,7 @@ import { SCORING, TRENCH } from '../config';
 import { createInitialState } from '../state';
 import { IDLE, runFields, runFrame, runFrames } from '../testUtils';
 import { beginWave, enterStage, startGame } from '../update';
-import { bandAt, checkCatwalks } from './combat';
+import { bandAt, checkCatwalks, trenchHardness } from './combat';
 import { slotIndex } from './layout';
 
 function trenchState(wave = 0) {
@@ -82,6 +82,22 @@ describe('trench flight', () => {
     expect(state.trench.pie).toEqual(pie);
     expect(state.trench.force).toBe(-1);
     expect(state.trench.pos.x).toBeLessThan(4096);
+  });
+
+  it("a repeat pass raises only this trench's hardness by the bump, not the game difficulty", () => {
+    const state = trenchState(2);
+    state.difficulty = 4;
+    state.difficultyBump = 2;
+    const before = trenchHardness(state);
+    let frames = 0;
+    while (state.trench.repeat === 0 && frames < 1000) {
+      state.shields = 6;
+      runFrames(state, 1);
+      frames += 1;
+    }
+    expect(state.trench.repeat).toBe(1);
+    expect(state.difficulty).toBe(4);
+    expect(trenchHardness(state)).toBe(before + 2);
   });
 });
 

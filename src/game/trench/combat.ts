@@ -37,9 +37,14 @@ export function checkCatwalks(state: GameState): void {
   if (p.gaugeFrames > before) p.gaugeFrames = Math.min(p.gaugeFrames, TRENCH.catwalkQuickGlowFrames);
 }
 
+/** WV.HRD for this trench: the wave's hardness plus GM.BMP for each repeat pass (PHIB0B bumps WV.HRD, never GM.DIF). */
+export function trenchHardness(state: GameState): number {
+  return Math.min(15, hardness(state.wave, state.difficulty) + state.trench.repeat * state.difficultyBump);
+}
+
 function usableSlots(state: GameState): number {
   if (state.trench.portX !== null) return 6;
-  const h = Math.min(hardness(state.wave, state.difficulty), 7);
+  const h = Math.min(trenchHardness(state), 7);
   return TRENCH.gunSlotsByHardness[h];
 }
 
@@ -53,7 +58,7 @@ function freeSlot(state: GameState): number {
 export function stepWallGuns(state: GameState): void {
   const t = state.trench;
   if (t.torpedoFired) return;
-  const row = TRENCH.gunWindow[Math.min(hardness(state.wave, state.difficulty), 7)];
+  const row = TRENCH.gunWindow[Math.min(trenchHardness(state), 7)];
   if ((t.frame & row.mask) !== 0) return;
   const startSlot = Math.floor(t.pos.x / TRENCH.slotLength);
   const endSlot = Math.floor((t.pos.x + TRENCH.generateAhead) / TRENCH.slotLength);
@@ -92,7 +97,7 @@ export function stepWallGuns(state: GameState): void {
 /** Wall shots creep toward the player as the player closes on them. */
 export function stepWallShots(state: GameState): void {
   const t = state.trench;
-  const easy = hardness(state.wave, state.difficulty) === 0;
+  const easy = trenchHardness(state) === 0;
   for (const fb of state.dogfight.fireballs) {
     if (!fb || fb.kind !== 'live' || fb.mover !== 'wall') continue;
     fb.pos.x -= 4 * (Math.floor(fb.pos.x / 256) - Math.floor(t.pos.x / 256));

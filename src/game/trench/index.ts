@@ -110,8 +110,7 @@ function stepFlying(state: GameState, input: Input): boolean {
     state.player.gaugeFrames = 10 + old;
     state.events.push({ type: 'shieldLost', remaining: state.shields });
     state.events.push({ type: 'speech', line: 'R2 NO' });
-    t.repeat += 1;
-    state.difficulty = Math.min(15, state.difficulty + state.difficultyBump);
+    t.repeat += 1; // each pass adds GM.BMP to this trench's hardness only (trenchHardness)
     enterTrench(state, false, true);
   }
   return false;
