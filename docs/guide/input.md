@@ -86,11 +86,11 @@ if (accumulator >= DT) {
 }
 ```
 
-The render that follows happens whether or not a Field ran, subject to the `MAX_RENDER_FPS` cap. The simulation has its own latch for the same reason one level up: `step` in [update.ts](../../src/game/update.ts) ORs `input.fire` into `state.fireLatch` every Field and hands the latched value to the Game Frame when one runs, so a press on any Field of a slow screen such as the Trench is not lost between Game Frames.
+The render that follows happens whether or not a Field ran, subject to the `MAX_RENDER_FPS` cap. The simulation has its own latch for the same reason one level up: `step` in [update.ts](../../src/game/update.ts) compares `input.fire` with `state.fireHeld`, the level on the previous Field, and sets `state.fireLatch` on a rising edge; the Game Frame receives the latch in place of `fire` and `step` clears it afterwards. So a press on any Field of a slow screen such as the Trench is not lost between Game Frames, and two clicks that land in consecutive Game Frames are two presses rather than one held button. The original's interrupt did the same at 252 Hz, OR-ing the trigger's falling edge into `VG.LON` for the mainline's `TSTLAZ` to consume once a frame. An earlier version detected the edge once per Game Frame instead, and on the 10 Hz near Dogfight a quick second click was read as the first one still held.
 
 ## Fire as the start button
 
-As on the cabinet, the trigger starts a game. In `stepFrame` the Attract mode runs `if (input.fire && !state.fireHeld) startGame(state)`, an edge detect on `fireHeld`. `startGame`, `beginWave` and the Initials Entry set `fireHeld` to true when they begin, so the press that started a game, chose a Death Star or ended initials is not also the first Laser of the next screen. Death Star Select uses the same edge detect to pick the Death Star under the Cursor, and holding the button down does not fire the Laser repeatedly in play either; `fireHeld` is compared each Game Frame.
+As on the cabinet, the trigger starts a game. In `stepFrame` the Attract mode runs `if (input.fire) startGame(state)`, where `fire` is the latched press. Because the latch is an edge and is cleared after every Game Frame, the press that started a game, chose a Death Star or ended initials is not also the first Laser of the next screen, and holding the button down does not fire the Laser repeatedly in play: the button has to come up and go down again for each shot.
 
 ## From the Yoke to the Cursor
 
@@ -102,7 +102,7 @@ As on the cabinet, the trigger starts a game. In `stepFrame` the Attract mode ru
 
 So the Cursor follows the Yoke as a first-order lag at the Field rate, with a time constant of about 50 ms far from the target and 115 ms near it (`-DT / ln(1 - fraction)` with `DT` just under 24 ms). `player.cursorTarget` keeps the clamped target for the simulation's own use. Mouse users feel this as a short trailing glide rather than a locked pointer; it is the cabinet's behaviour, not smoothing added here. See [Projection](../reference/projection.md), section 4.3, for where the numbers come from, and [Coordinates](./coordinates.md) for pot units against VG units.
 
-The `CURSOR` block in [config.ts](../../src/game/config.ts) also holds `hoodShiftX` and `hoodShiftY` (55 and 40 VG units), used by an exported `hoodShift(player)` in `cursor.ts` that nothing currently calls; the renderer computes the cockpit shift from `COCKPIT_SHIFT` in [hud.ts](../../src/data/hud.ts) instead, with the same result at full deflection.
+The cockpit pictures and the Laser gun tips slide with the Yoke too, but that is the renderer's arithmetic: `hoodShift` in [renderer.ts](../../src/render/renderer.ts) applies `COCKPIT_SHIFT` from [hud.ts](../../src/data/hud.ts) to `player.cursorPot`.
 
 ## Where to change things
 

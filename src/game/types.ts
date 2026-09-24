@@ -13,7 +13,9 @@ export type StageKind = 'dogfight' | 'surface' | 'trench';
 /**
  * One snapshot of the yoke and buttons. `x` is +1 pushed fully right, `y` is
  * +1 pulled fully back (cursor up), both 0 at rest. `fire` is any of the four
- * yoke buttons, which also start a game.
+ * yoke buttons, which also start a game. In the snapshot `step` receives each
+ * field it is the button's level; in the input a game frame receives it has
+ * been replaced by whether a new press was seen since the last game frame.
  */
 export interface Input {
   x: number;
@@ -377,8 +379,9 @@ export interface GameState {
   highScores: HighScoreRow[];
   /** Credits: free play holds this at one. */
   credits: number;
+  /** The button's level on the last field, for the per-field edge detect. */
   fireHeld: boolean;
-  /** A fire press seen on any field since the last game frame, so no press falls between frames. */
+  /** A fire press (rising edge) seen on any field since the last game frame, so no press falls between frames. */
   fireLatch: boolean;
   rng: Rng;
   /** Events raised by the most recent step. Cleared at the start of every step. */

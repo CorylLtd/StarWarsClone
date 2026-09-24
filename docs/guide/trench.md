@@ -10,7 +10,6 @@ The Trench is the last stage of a wave: Red Five flies the Death Star's trench a
 | [layout.ts](../../src/game/trench/layout.ts) | `pieForWave`, `slotIndex`, `resetLayout`, `generateRow`, `stepLayout`, the Force bonus award |
 | [combat.ts](../../src/game/trench/combat.ts) | `bandAt`, `checkCatwalks`, `trenchHardness`, Trench Turrets and their shots, `resolveTrenchLaser`, `stepTorpedo` |
 | [src/data/trench.ts](../../src/data/trench.ts) | Generated: the wall models, `WEDGES`, `WEDGE_ENDS`, `PIES`, and `TRENCH_MESSAGES` notes for the HUD |
-| [src/game/stages/trench.ts](../../src/game/stages/trench.ts) | An empty skeleton. Nothing imports `src/game/stages/`; the live entry points are in `src/game/trench/index.ts` |
 | [trench.test.ts](../../src/game/trench/trench.test.ts) | Vitest coverage of layout, flight, the Force, Catwalks, Trench Turrets and the Exhaust Port |
 
 The state is `state.trench`, typed as `Trench` in [types.ts](../../src/game/types.ts). Like the Surface, the Trench borrows `state.dogfight.fireballs` for its six shot slots and `state.player` for the basis, Cursor and Laser. The renderer (`src/render/trenchView.ts`) reads `pos`, `slots`, `rowStarts`, `portX`, `endX`, `torpedo`, `force`, `forceBonus`, `repeat`, `missedFrames`, `cueIndexPassed`, and the explosion and accounting fields.
@@ -270,7 +269,6 @@ All in `TRENCH` in [config.ts](../../src/game/config.ts):
 
 ## Things to watch
 
-- `src/game/stages/trench.ts` is an unused skeleton. Edit `src/game/trench/index.ts`.
 - A repeat pass re-enters through `enterTrench` directly, not `enterStage`, so no `stageStarted` event is raised and `state.stageFrames` keeps counting.
 - The miss path bypasses `shieldHit`: no screen flash, no forced roll, no first-hit speech, and the gauge window is cleared so the loss always lands.
 - The 50 points for a decorative panel is a literal in `combat.ts`, against the rule in `config.ts` that no magic number lives outside it.

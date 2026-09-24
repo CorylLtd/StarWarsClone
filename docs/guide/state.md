@@ -41,13 +41,13 @@ All randomness comes from `state.rng` through `nextFloat`, `range` and `pick`. T
 
 | Mode | Stepped by | Leaves when |
 |---|---|---|
-| `attract` | `stepAttractFrame` | A fire press that was not already held: `startGame`. |
+| `attract` | `stepAttractFrame` | A fire press: `startGame`. |
 | `select` | `stepSelect` | The Cursor is over a Death Star miniature on a press, or `selectFrames` runs out: `beginWave`. |
 | `playing` | `stepPlaying`, which dispatches on `stage` | The stage reports done, or `shields < 0`. |
 | `dying` | `stepDyingFrame` in the Dogfight only; the Surface and Trench hold their last picture | `modeFrames >= TIMING.deathFrames` (40): `endGame`. |
 | `initials` | `stepInitialsFrame` | The player signs off with END or the 640-frame timeout: back to the Attract's high-score page. |
 
-`setMode` is the only way the mode changes and it zeroes `modeFrames`. `fireHeld` is set true on every entry into a mode that a press could otherwise fall straight through, so the press that started the game does not also select a Death Star.
+`setMode` is the only way the mode changes and it zeroes `modeFrames`. The press that causes a transition cannot also count as the next screen's first press, because `step` latches presses as rising edges per Field and clears the latch after every Game Frame: the button has to come up and go down again.
 
 ## Game start and the select screen
 
@@ -65,11 +65,11 @@ All randomness comes from `state.rng` through `nextFloat`, `range` and `pick`. T
 
 `enterTrench` is told whether the Trench was entered from the Surface, which decides the entry altitude. The wave-1 path from space starts higher.
 
-`completeWave` pushes `waveCompleted`, advances `wave` (capped at 98), raises `difficultyBump` by one for each of the first five waves (capped at 4), adds the bump to `difficulty` (capped at 15), clears `firstWave` and re-enters the Dogfight. The points for the Exhaust Port, the end-of-wave shield bonus, the bonus Deflector Shield and the wave-select bonus are all awarded inside the Trench's `next` phase before `completeWave` is reached, so `completeWave` itself scores nothing.
+`completeWave` pushes `waveCompleted`, advances `wave` (capped at 98), raises `difficultyBump` by one for each of the first five waves (capped at `OPTIONS.difficultyBumpMax`, 1 here against the original's 4), adds the bump to `difficulty` (capped at 15), clears `firstWave` and re-enters the Dogfight. The points for the Exhaust Port, the end-of-wave shield bonus, the bonus Deflector Shield and the wave-select bonus are all awarded inside the Trench's `next` phase before `completeWave` is reached, so `completeWave` itself scores nothing.
 
 ## Difficulty and Hardness
 
-Two numbers feed the enemies' fire rate. `state.difficulty` starts at the operator's Play Difficulty and grows by `difficultyBump` at each Death Star. **Hardness** is `hardness(wave, difficulty)` in [waves.ts](../../src/game/dogfight/waves.ts): the wave (capped at 31) plus the difficulty, capped at 15. The original called it `WV.HRD`. It indexes the fire tables: `FIRE_TABLE` in the Dogfight, `gunSlotsByHardness` on the Surface and `gunWindow` in the Trench. A missed Exhaust Port repeats the Trench with `trench.repeat` incremented, and `trenchHardness` adds one bump per repeat to that trench only, matching the original's `PHIB0B`, which bumped `WV.HRD` without touching `GM.DIF`.
+Two numbers feed the enemies' fire rate. `state.difficulty` starts at the operator's Play Difficulty and grows by `difficultyBump` at each Death Star. **Hardness** is `hardness(wave, difficulty)` in [waves.ts](../../src/game/dogfight/waves.ts): the wave (capped at 31) plus the difficulty, capped at 15. The original called it `WV.HRD`. It indexes the fire tables: `FIRE_TABLE` in the Dogfight, `gunSlotsByHardness` on the Surface and `gunWindow` in the Trench. The Surface uses `surfaceHardness` in [groundGuns.ts](../../src/game/surface/groundGuns.ts), the same sum with the wave one lower, as the original's `PHIGD` computed `WV.HRD` from `GD.WAV = GM.WAV - 1`. A missed Exhaust Port repeats the Trench with `trench.repeat` incremented, and `trenchHardness` adds one bump per repeat to that trench only, matching the original's `PHIB0B`, which bumped `WV.HRD` without touching `GM.DIF`.
 
 ## Deflector Shields
 

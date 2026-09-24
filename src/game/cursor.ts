@@ -28,11 +28,3 @@ function slew(pos: number, target: number): number {
   const move = Math.max(1, dist * fraction);
   return move >= dist ? target : pos + Math.sign(delta) * move;
 }
-
-/** How far the yoke shifts the drawn hood and gun tips, VG units, from the slewed cursor position. */
-export function hoodShift(player: Player): { x: number; y: number } {
-  return {
-    x: (player.cursorPot.x / 127) * CURSOR.hoodShiftX,
-    y: (player.cursorPot.y / 127) * CURSOR.hoodShiftY,
-  };
-}

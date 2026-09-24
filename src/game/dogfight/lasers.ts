@@ -4,17 +4,16 @@ import type { GameState, Input } from '../types';
 import { hitAlien } from './aliens';
 import { hurtFireball } from './guns';
 
-/** Once per frame: a fire press starts an 8-frame bolt; a bolt that has hit freezes for 4 frames. */
+/** Once per frame: a fire press (latched by `step` since the last frame) starts an 8-frame bolt; a bolt that has hit freezes for 4 frames. */
 export function stepLaserTrigger(state: GameState, input: Input): void {
   const p = state.player;
-  if (input.fire && !state.fireHeld) {
+  if (input.fire) {
     p.laserLeftPair = !p.laserLeftPair;
     p.laserHit = 0;
     p.laserFrames = LASER.boltFrames;
     state.events.push({ type: 'laserFired' });
     state.events.push({ type: 'sound', name: 'laser' });
   }
-  state.fireHeld = input.fire;
   tickLaser(state);
 }
 
