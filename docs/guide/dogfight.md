@@ -8,7 +8,7 @@ The Dogfight is the first Stage of every Wave: Red Five sits still in open space
 |---|---|---|
 | [index.ts](../../src/game/dogfight/index.ts) | `enterDogfight`, `stepDogfightFrame`, `stepDyingFrame`; the phase machine | `PHISP1`, `PHESP1`, `PHESP2`, `VEWHPA`, `PHES0D` |
 | [aim.ts](../../src/game/dogfight/aim.ts) | Auto-aim: `stepView`, `chooseAimTarget`, `aimRates`, `deathStarRates`, `ticsFromRate` | `AIM`, `AIMA`, `AIMDTH`, `RHTRIG` |
-| [cursor.ts](../../src/game/cursor.ts) | Yoke to Cursor: `stepCursor`, `hoodShift` | `RHCTRL`, `RHPOS` (the interrupt side) |
+| [cursor.ts](../../src/game/cursor.ts) | Yoke to Cursor: `stepCursor` | `RHCTRL`, `RHPOS` (the interrupt side) |
 | [lasers.ts](../../src/game/dogfight/lasers.ts) | Trigger, bolt timing, hit resolution: `stepLaserTrigger`, `tickLaser`, `resolveLaser` | `TSTLAZ`, `CLSLZ` |
 | [view.ts](../../src/game/dogfight/view.ts) | Projection of aliens and Fireballs to screen, hit boxes, status bits, impacts: `view` | `VIEW`, `S2VW`, `VWGUN` |
 | [guns.ts](../../src/game/dogfight/guns.ts) | Fireballs and the Deflector Shield: `fireFireball`, `stepFireballs`, `hurtFireball`, `fireballImpact`, `shieldHit`, `loseShield` | `FRAGUN`, `MOVAM`, `GNHTSG`, `GNAHIT`, `DO1GAS` |
@@ -19,7 +19,6 @@ The Dogfight is the first Stage of every Wave: Red Five sits still in open space
 | [stars.ts](../../src/game/dogfight/stars.ts) | The star field, shared with the Attract | `VWSTAR`, `SMVSP1`, `SMVHIS`, `SMVBNR`, `SMVINS`, `SMVSCR` |
 | [choreography.ts](../../src/data/choreography.ts) | Data: `PROGRAM`, `ENTRY`, `START_SPOTS`, `LEVEL_LISTS`, `WAVE_SETS` | `TCH1A1` and the other script labels |
 
-There is also a `src/game/stages/` directory with a `Stage` interface and an empty `enterDogfight`/`stepDogfight` pair. Nothing imports it. The live entry points are the ones in `src/game/dogfight/index.ts`, which `update.ts` imports as `./dogfight`.
 
 ## State
 
@@ -89,7 +88,7 @@ The Game Frame period is not fixed. `framePeriod` in [pace.ts](../../src/game/pa
 
 ### Cursor
 
-`stepCursor` in [cursor.ts](../../src/game/cursor.ts) runs from `update.step` every Field, in every mode, as the original's interrupt did. The Yoke deflection `input.x`, `input.y` in -1..1 becomes a target in pot units (times 127) clamped to the Cursor box `CURSOR.potLeft..potRight` (-112..112) and `potBottom..potTop` (-104..120). `cursorPot` slews toward it by `CURSOR.slewFar` (0x60/256) of the remaining distance when that distance is at least `CURSOR.slewFarFrom` (0x40) and `CURSOR.slewNear` (0x30/256) otherwise, moving at least one unit and never overshooting. `cursor` is the rounded pot times `CURSOR.potToScreen` (4), in VG units without the -104 vertical offset; the renderer adds `VG.offsetY` when it draws. `hoodShift` reports how far the drawn hood and gun tips slide with the Yoke; the renderer has its own copy of that arithmetic.
+`stepCursor` in [cursor.ts](../../src/game/cursor.ts) runs from `update.step` every Field, in every mode, as the original's interrupt did. The Yoke deflection `input.x`, `input.y` in -1..1 becomes a target in pot units (times 127) clamped to the Cursor box `CURSOR.potLeft..potRight` (-112..112) and `potBottom..potTop` (-104..120). `cursorPot` slews toward it by `CURSOR.slewFar` (0x60/256) of the remaining distance when that distance is at least `CURSOR.slewFarFrom` (0x40) and `CURSOR.slewNear` (0x30/256) otherwise, moving at least one unit and never overshooting. `cursor` is the rounded pot times `CURSOR.potToScreen` (4), in VG units without the -104 vertical offset; the renderer adds `VG.offsetY` when it draws. The renderer works out how far the drawn hood and gun tips slide with the Yoke from `player.cursorPot` and `COCKPIT_SHIFT`.
 
 ### Auto-aim
 
@@ -282,5 +281,4 @@ Run them with `npm test`.
 - The order inside `stepDogfightFrame` matters for hit detection and for a fresh alien's first script frame. Keep new work in the slot the original's `PHESP1` gives it.
 - `darthSeen` is set but never read. Darth's speech line is not raised by this module.
 - The `passby` check in `view` tests `!d.passbySlot`, which is true for slot 0 as well as `null`, so a second alien can take over the passby while slot 0 is still near.
-- `src/game/stages/` is an unused skeleton. Edit `src/game/dogfight/index.ts`.
 - Score, Shield and Hardness values reach the module through `state`, not through arguments; tests set them directly on the state.

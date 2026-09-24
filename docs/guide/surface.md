@@ -12,7 +12,6 @@ The Surface is the second stage of a wave: Red Five flies over the Death Star am
 | [fragments.ts](../../src/game/surface/fragments.ts) | The three slabs thrown off a destroyed Hat or Laser Bunker |
 | [dots.ts](../../src/game/surface/dots.ts) | The fifty green ground dots that stand in for the ground plane |
 | [src/data/surface.ts](../../src/data/surface.ts) | Generated: building models, fragment models, the Maze tables, the wave-to-Maze table |
-| [src/game/stages/surface.ts](../../src/game/stages/surface.ts) | An empty skeleton (`enterSurface` and `stepSurface` with no body). Nothing imports `src/game/stages/`; the live entry points are the ones in `src/game/surface/index.ts` |
 | [surface.test.ts](../../src/game/surface/surface.test.ts) | Vitest coverage of the flow and the combat |
 
 The state the module works on is `state.surface`, typed as `Surface` in [types.ts](../../src/game/types.ts), plus `state.player` (basis, Cursor, Laser) and `state.dogfight.fireballs`, which the Surface borrows as its six ground-shot slots. The renderer reads `buildings`, `fragments`, `munge`, `dots` and `pos` in `src/render/surfaceView.ts`, and `towersLeft`, `nextTowerPoints` and `allTowersCleared` for the HUD text in `src/render/renderer.ts`.
@@ -234,7 +233,6 @@ The helper `surfaceState(wave)` builds a seeded state, starts a game, `beginWave
 
 ## Things to watch
 
-- `src/game/stages/surface.ts` is an unused skeleton. Edit `src/game/surface/index.ts`.
 - Guns are keyed to `b.seen`, and `firedThisLap` is cleared when a building leaves sight, so "once per Lap" is really "once per sighting".
 - `stepTransition` does not step shots, guns or collisions; the fireball slots were emptied when `'dropping'` began.
 - The transition already lowers `surface.pos.z` to -3328, but the Trench keeps its own position and `enterTrench` sets `trench.pos.z` from `TRENCH.entryFromSurfaceZ`.

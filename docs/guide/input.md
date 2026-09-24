@@ -102,7 +102,7 @@ As on the cabinet, the trigger starts a game. In `stepFrame` the Attract mode ru
 
 So the Cursor follows the Yoke as a first-order lag at the Field rate, with a time constant of about 50 ms far from the target and 115 ms near it (`-DT / ln(1 - fraction)` with `DT` just under 24 ms). `player.cursorTarget` keeps the clamped target for the simulation's own use. Mouse users feel this as a short trailing glide rather than a locked pointer; it is the cabinet's behaviour, not smoothing added here. See [Projection](../reference/projection.md), section 4.3, for where the numbers come from, and [Coordinates](./coordinates.md) for pot units against VG units.
 
-The `CURSOR` block in [config.ts](../../src/game/config.ts) also holds `hoodShiftX` and `hoodShiftY` (55 and 40 VG units), used by an exported `hoodShift(player)` in `cursor.ts` that nothing currently calls; the renderer computes the cockpit shift from `COCKPIT_SHIFT` in [hud.ts](../../src/data/hud.ts) instead, with the same result at full deflection.
+The cockpit pictures and the Laser gun tips slide with the Yoke too, but that is the renderer's arithmetic: `hoodShift` in [renderer.ts](../../src/render/renderer.ts) applies `COCKPIT_SHIFT` from [hud.ts](../../src/data/hud.ts) to `player.cursorPot`.
 
 ## Where to change things
 

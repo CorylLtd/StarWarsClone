@@ -84,9 +84,6 @@ export const CURSOR = {
   slewNear: 0x30 / 256,
   /** Remaining distance (pot units) above which the far fraction applies. */
   slewFarFrom: 0x40,
-  /** How far the yoke shifts the drawn hood and gun tips at full deflection, VG units. */
-  hoodShiftX: 55,
-  hoodShiftY: 40,
 };
 
 /** The player's view in the Dogfight: auto-aim slew in binary-angle "tics" (1 tic = 360/5632 degrees). */

@@ -27,7 +27,6 @@ The animation loop steps the simulation in fixed `DT` fields, forwards each `Gam
 | [attractView.ts](../../src/render/attractView.ts) | `drawAttractScreen`, `drawInitialsScreen` |
 | [surfaceView.ts](../../src/render/surfaceView.ts) | `drawSurface`: buildings, fragments and ground dots |
 | [trenchView.ts](../../src/render/trenchView.ts) | `drawTrench`, `drawTorpedo`, `drawDeathStarEnd`, `drawForceBonus`, `drawTrenchMessages` |
-| [starfield.ts](../../src/render/starfield.ts) | `createStarfield`: a sphere of stars that nothing imports (see below) |
 | [screenFrame.ts](../../src/ui/screenFrame.ts) | `ScreenFrame`: the 4:3 DOM element the canvas fills |
 
 ## Coordinate frames
@@ -102,7 +101,7 @@ The private draw methods read these parts of `GameState`:
 | `drawSelect` | `selectFrames`; positions from `SELECT.positions` |
 | `drawGameOverGrowing` | `modeFrames` |
 
-The private `hoodShift` is the renderer's own: `Math.sign(pot) * Math.floor(Math.abs(pot) * COCKPIT_SHIFT)`, with `COCKPIT_SHIFT` from [hud.ts](../../src/data/hud.ts) (110/256 and 80/256) applied to `player.cursorPot`. It moves the cockpit pictures and the Laser gun tips together. There is also a `hoodShift` exported from [cursor.ts](../../src/game/cursor.ts) that nothing calls.
+The private `hoodShift` is the renderer's own: `Math.sign(pot) * Math.floor(Math.abs(pot) * COCKPIT_SHIFT)`, with `COCKPIT_SHIFT` from [hud.ts](../../src/data/hud.ts) (110/256 and 80/256) applied to `player.cursorPot`. It moves the cockpit pictures and the Laser gun tips together.
 
 `drawLasers` reproduces the original's bolt: from each gun tip it halves the remaining distance to `laserAt` up to eight times, colouring each step from `LASER_COLOURS` rotated by `frame` with the second gun offset by four entries; once `laserHit` is set, it draws a single turquoise segment and a `LASER_SPLASHES` stamp at the end. `drawFireballs` scales a Fireball's sparkle by `512 / halfDistance` clamped to 1/64..4, and draws the `hurt` and `glow` kinds as purple and white pinwheels whose brightness follows `timer`. The comments in `renderer.ts` name the original's routines (`VEWHPB`, `GN1DRW`, `GLOWVW`, `VWGLW`) where a choice needs explaining.
 
@@ -238,10 +237,6 @@ Each view module is a set of free functions taking `GameState` and a `LineSet`. 
 
 `drawTorpedo` projects the Torpedo pair by hand (`toView`, `inCone`, then `512 * y / x`) and draws turquoise `FIREBALL_TIPS` pinwheels on the flat batch. `drawDeathStarEnd` covers the three phases after the Exhaust Port is hit: `explosion1` is the big Death Star receding at `dxScale`; `explosion3` is the burst, the miniature on its first frame and then circles of the Death Star's 16-segment outline at scale words stepped by `burstCount`, red, blue and white by `burstPhase`; `next` is the DEATH STAR DESTROYED text and the shield accounting shown as `nextTim` counts down.
 
-### starfield.ts
-
-`createStarfield(rng, color)` builds 400 `THREE.Points` on a sphere of radius 9000. Nothing imports it. The stars the player sees come from `visibleStars` in [stars.ts](../../src/game/dogfight/stars.ts), which the simulation streams and regenerates as the original did, and `WorldRenderer.drawStars` places them on the overlay as points at their projected VG positions. Treat `starfield.ts` as unused.
-
 ## What the renderer reads, and when
 
 Three clocks meet in `render` (the first two are described in [Timing](./timing.md)):
@@ -272,7 +267,7 @@ if (height > h) { height = h; width = h * ASPECT; }
 
 The element's `style.width` and `style.height` are set in whole pixels; the renderer reads them back through `clientWidth` and `clientHeight`. `YokeInput` uses the same element's bounding rectangle for the mouse, so the visible frame, the render viewport and the Yoke's full deflection are one rectangle.
 
-[style.css](../../src/style.css) does the rest: `html, body` are black with `overflow: hidden`, `user-select: none` and `cursor: none` (the browser pointer is hidden because the Cursor is drawn by the renderer); `#app` is a fixed, flex-centred box; `#screen` is `position: relative` with `overflow: hidden` and a black background; `#screen canvas.world` fills it with `position: absolute; inset: 0`. The `:root` colour variables, the `.overlay` class and the `[hidden]` rule have no users in the current source.
+[style.css](../../src/style.css) does the rest: `html, body` are black with `overflow: hidden`, `user-select: none` and `cursor: none` (the browser pointer is hidden because the Cursor is drawn by the renderer); `#app` is a fixed, flex-centred box; `#screen` is `position: relative` with `overflow: hidden` and a black background; `#screen canvas.world` fills it with `position: absolute; inset: 0`.
 
 ## Dev hooks
 
