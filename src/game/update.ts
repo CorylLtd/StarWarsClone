@@ -14,13 +14,20 @@ import type { GameState, Input, StageKind } from './types';
  * Advance the simulation by one vector-generator field. The cursor slews every
  * field, as the original's interrupt did; game logic runs once the current
  * screen's frame period has elapsed, every second field at best.
+ *
+ * The trigger is edge-detected here, per field, as the original's interrupt
+ * detected it: a press is latched until the next game frame consumes it. The
+ * game frame therefore sees `fire` as "pressed since the last frame", never as
+ * a level, so two clicks in consecutive frames are two shots and a held button
+ * is one.
  */
 export function step(state: GameState, input: Input, dt: number): void {
   state.events.length = 0;
   state.time += dt;
   state.field += 1;
   stepCursor(state.player, input);
-  state.fireLatch = state.fireLatch || input.fire;
+  if (input.fire && !state.fireHeld) state.fireLatch = true;
+  state.fireHeld = input.fire;
   state.frameDebt += DT / framePeriod(state);
   if (state.frameDebt < 1) return;
   state.frameDebt -= 1;
@@ -35,8 +42,7 @@ function stepFrame(state: GameState, input: Input): void {
   switch (state.mode) {
     case 'attract':
       stepAttractFrame(state);
-      if (input.fire && !state.fireHeld) startGame(state);
-      state.fireHeld = input.fire;
+      if (input.fire) startGame(state);
       break;
     case 'initials':
       if (stepInitialsFrame(state, input.fire)) enterAttractMode(state, 'highScores');
@@ -72,7 +78,6 @@ export function startGame(state: GameState): void {
   state.shields = OPTIONS.startingShields;
   state.player = createPlayer();
   state.dogfight = createDogfight();
-  state.fireHeld = true;
   state.selectFrames = SELECT.countdownFrames;
   setMode(state, 'select');
   state.events.push({ type: 'gameStarted' });
@@ -93,8 +98,7 @@ export function selectTarget(state: GameState): number {
 
 function stepSelect(state: GameState, input: Input): void {
   state.selectFrames -= 1;
-  const press = input.fire && !state.fireHeld;
-  state.fireHeld = input.fire;
+  const press = input.fire;
   const over = selectTarget(state);
   if (press && over >= 0) {
     beginWave(state, SELECT.positions[over].wave);
@@ -110,7 +114,6 @@ export function beginWave(state: GameState, wave: number): void {
   state.player.rollFrames = 0;
   state.player.laserFrames = 0;
   state.player.laserHit = 0;
-  state.fireHeld = true;
   setMode(state, 'playing');
   state.events.push({ type: 'waveSelected', wave });
   enterStage(state, 'dogfight');
@@ -167,7 +170,7 @@ function stepPlaying(state: GameState, input: Input): void {
 export function completeWave(state: GameState): void {
   state.events.push({ type: 'waveCompleted', wave: state.wave });
   state.wave = Math.min(98, state.wave + 1);
-  if (state.wave < 5) state.difficultyBump = Math.min(4, state.difficultyBump + 1);
+  if (state.wave < 5) state.difficultyBump = Math.min(OPTIONS.difficultyBumpMax, state.difficultyBump + 1);
   state.difficulty = Math.min(15, state.difficulty + state.difficultyBump);
   state.firstWave = false;
   state.player.basis = reversedBasis();
@@ -192,6 +195,5 @@ export function endGame(state: GameState): void {
 
 export function enterAttractMode(state: GameState, phase: 'highScores' | 'banner'): void {
   setMode(state, 'attract');
-  state.fireHeld = true;
   enterAttract(state, phase);
 }

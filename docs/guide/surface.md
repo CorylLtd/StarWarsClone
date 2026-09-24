@@ -156,7 +156,7 @@ The bank kick: a tower sets `collisionRoll` to `±towerCrashRoll` (32) away from
 
 ## Ground guns
 
-[groundGuns.ts](../../src/game/surface/groundGuns.ts) implements `GDGUN`/`GDTWRGN`/`GDBSHGN`/`GDBNKGN` and the movers from `WSGUNS.MAC`. Shots live in `state.dogfight.fireballs`, six slots, but only the first `usableSlots` may be used: `SURFACE.gunSlotsByHardness[min(hardness, 11)]`, where `hardness` is `min(15, min(wave, 31) + difficulty)` from [waves.ts](../../src/game/dogfight/waves.ts). The reference notes the original's Surface used a Hardness one notch below the Dogfight's (`GD.WAV = GM.WAV - 1`); this code uses the same `hardness` as the Dogfight.
+[groundGuns.ts](../../src/game/surface/groundGuns.ts) implements `GDGUN`/`GDTWRGN`/`GDBSHGN`/`GDBNKGN` and the movers from `WSGUNS.MAC`. Shots live in `state.dogfight.fireballs`, six slots, but only the first `usableSlots` may be used: `SURFACE.gunSlotsByHardness[min(surfaceHardness, 11)]`. `surfaceHardness` is `hardness(wave - 1, difficulty)` with `hardness` from [waves.ts](../../src/game/dogfight/waves.ts): one notch below the Dogfight's, as the original's `PHIGD` computed `WV.HRD` from `GD.WAV = GM.WAV - 1`.
 
 `stepGroundGuns` does nothing once `laps >= killAtLap` or when `shields < 0`. For every seen, undamaged building:
 
@@ -235,7 +235,6 @@ The helper `surfaceState(wave)` builds a seeded state, starts a game, `beginWave
 ## Things to watch
 
 - `src/game/stages/surface.ts` is an unused skeleton. Edit `src/game/surface/index.ts`.
-- The Surface reads `hardness(wave, difficulty)` for its gun slots, which is the Dogfight's Hardness, not the one-notch-easier value the reference records for `PHIGD`.
 - Guns are keyed to `b.seen`, and `firedThisLap` is cleared when a building leaves sight, so "once per Lap" is really "once per sighting".
 - `stepTransition` does not step shots, guns or collisions; the fireball slots were emptied when `'dropping'` began.
 - The transition already lowers `surface.pos.z` to -3328, but the Trench keeps its own position and `enterTrench` sets `trench.pos.z` from `TRENCH.entryFromSurfaceZ`.

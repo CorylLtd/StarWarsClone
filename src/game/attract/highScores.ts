@@ -20,7 +20,6 @@ export function beginInitials(state: GameState, row: number): void {
   state.initials = { row, letters: [], hover: null, frame: 0 };
   state.mode = 'initials';
   state.modeFrames = 0;
-  state.fireHeld = true;
   state.events.push({ type: 'highScore', row });
   state.events.push({ type: 'music', cue: 'cantina' });
 }
@@ -40,13 +39,11 @@ export function hoveredItem(state: GameState): string | null {
   return done ? 'END' : null;
 }
 
-/** One frame of initials entry: track the hovered item, commit on a trigger edge, time out at 32 seconds. */
-export function stepInitialsFrame(state: GameState, fire: boolean): boolean {
+/** One frame of initials entry: track the hovered item, commit on a trigger press, time out at 32 seconds. */
+export function stepInitialsFrame(state: GameState, press: boolean): boolean {
   const e = state.initials;
   e.frame += 1;
   e.hover = hoveredItem(state);
-  const press = fire && !state.fireHeld;
-  state.fireHeld = fire;
   const row = state.highScores[e.row];
   if (press && e.hover !== null) {
     if (e.hover === 'END') {

@@ -86,11 +86,11 @@ if (accumulator >= DT) {
 }
 ```
 
-The render that follows happens whether or not a Field ran, subject to the `MAX_RENDER_FPS` cap. The simulation has its own latch for the same reason one level up: `step` in [update.ts](../../src/game/update.ts) ORs `input.fire` into `state.fireLatch` every Field and hands the latched value to the Game Frame when one runs, so a press on any Field of a slow screen such as the Trench is not lost between Game Frames.
+The render that follows happens whether or not a Field ran, subject to the `MAX_RENDER_FPS` cap. The simulation has its own latch for the same reason one level up: `step` in [update.ts](../../src/game/update.ts) compares `input.fire` with `state.fireHeld`, the level on the previous Field, and sets `state.fireLatch` on a rising edge; the Game Frame receives the latch in place of `fire` and `step` clears it afterwards. So a press on any Field of a slow screen such as the Trench is not lost between Game Frames, and two clicks that land in consecutive Game Frames are two presses rather than one held button. The original's interrupt did the same at 252 Hz, OR-ing the trigger's falling edge into `VG.LON` for the mainline's `TSTLAZ` to consume once a frame. An earlier version detected the edge once per Game Frame instead, and on the 10 Hz near Dogfight a quick second click was read as the first one still held.
 
 ## Fire as the start button
 
-As on the cabinet, the trigger starts a game. In `stepFrame` the Attract mode runs `if (input.fire && !state.fireHeld) startGame(state)`, an edge detect on `fireHeld`. `startGame`, `beginWave` and the Initials Entry set `fireHeld` to true when they begin, so the press that started a game, chose a Death Star or ended initials is not also the first Laser of the next screen. Death Star Select uses the same edge detect to pick the Death Star under the Cursor, and holding the button down does not fire the Laser repeatedly in play either; `fireHeld` is compared each Game Frame.
+As on the cabinet, the trigger starts a game. In `stepFrame` the Attract mode runs `if (input.fire) startGame(state)`, where `fire` is the latched press. Because the latch is an edge and is cleared after every Game Frame, the press that started a game, chose a Death Star or ended initials is not also the first Laser of the next screen, and holding the button down does not fire the Laser repeatedly in play: the button has to come up and go down again for each shot.
 
 ## From the Yoke to the Cursor
 
