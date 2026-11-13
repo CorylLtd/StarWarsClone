@@ -26,7 +26,7 @@ The Attract is what the cabinet shows when no game is in progress: the High Scor
 | `dying` | `stepDyingFrame` in the Dogfight; nothing in the other Stages | `modeFrames >= TIMING.deathFrames` (40) → `endGame` |
 | `initials` | `stepInitialsFrame` | Returns `true` → `enterAttractMode(state, 'highScores')` |
 
-`setMode` records the new mode and zeroes `modeFrames`. Every transition into a mode that reads the trigger sets `state.fireHeld = true`, so the press that caused the transition cannot also count as the next one.
+`setMode` records the new mode and zeroes `modeFrames`. The press that caused a transition cannot also count as the next one: `step` latches presses as rising edges per Field and clears the latch after every Game Frame, so the button must be released and pressed again.
 
 ## The Attract cycle
 
@@ -74,13 +74,13 @@ Timed by `ATTRACT.highScoresFrames`. The renderer draws `COPYRIGHT`, `HIGH_SCORE
 
 ## Starting a game
 
-In the `attract` case of `stepFrame`, `input.fire && !state.fireHeld` calls `startGame`. The input reaching `stepFrame` has `fire` replaced by `state.fireLatch`, which `step` sets on any Field since the last Game Frame, so a press shorter than a frame period still starts a game. `startGame` (`PHESG1`) resets the score and its fade, `wave` to 0, `difficulty` to `OPTIONS.playDifficulty` with a zero `difficultyBump`, `firstWave` and `firstShieldHitDone`, `shields` to `OPTIONS.startingShields`, replaces `player` and `dogfight` with fresh records (which recentres the Cursor), sets `selectFrames = SELECT.countdownFrames`, switches to `select`, and pushes `gameStarted` and the speech `"RED FIVE STANDING BY"`. `highScores`, `highScore` and `attract.lastWaveDisplayed` are left alone.
+In the `attract` case of `stepFrame`, `input.fire` calls `startGame`. The input reaching `stepFrame` has `fire` replaced by `state.fireLatch`, which `step` sets on a rising edge of the button on any Field since the last Game Frame, so a press shorter than a frame period still starts a game and a held button starts only one. `startGame` (`PHESG1`) resets the score and its fade, `wave` to 0, `difficulty` to `OPTIONS.playDifficulty` with a zero `difficultyBump`, `firstWave` and `firstShieldHitDone`, `shields` to `OPTIONS.startingShields`, replaces `player` and `dogfight` with fresh records (which recentres the Cursor), sets `selectFrames = SELECT.countdownFrames`, switches to `select`, and pushes `gameStarted` and the speech `"RED FIVE STANDING BY"`. `highScores`, `highScore` and `attract.lastWaveDisplayed` are left alone.
 
 ## Death Star Select
 
 `stepSelect` counts `selectFrames` down from `SELECT.countdownFrames` (256) and calls `beginWave` with the chosen wave on a trigger rising edge while `selectTarget` is over a miniature, or with 0 when the countdown expires. `selectTarget` compares the Cursor with the three `SELECT.positions`: the Cursor's Y is shifted by the literal 104 (the `VGOFFY` vanishing-point offset, `VG.offsetY` in config), and a miniature is hit when `dx < SELECT.hitDx` (52), `dy < SELECT.hitDy` (72) and `dx + dy < SELECT.hitSum` (80). The positions carry their wave: left (-400, 100) wave 0, bottom (0, -300) wave 2, right (400, 100) wave 4, displayed as 1, 3 and 5. The renderer calls `selectTarget` too, to colour the Cursor yellow, and shows the countdown digit as `floor(selectFrames * 8 / 256)`, 8 down to 0.
 
-`beginWave(state, wave)` sets `wave`, resets the view to `reversedBasis()` and the roll and Laser counters, sets `fireHeld`, switches to `playing`, pushes `waveSelected` and calls `enterStage(state, 'dogfight')`. The bonus for starting on a later wave (`SCORING.waveSelectBonus`) is paid by the Trench at the end of the first Death Star, not here.
+`beginWave(state, wave)` sets `wave`, resets the view to `reversedBasis()` and the roll and Laser counters, switches to `playing`, pushes `waveSelected` and calls `enterStage(state, 'dogfight')`. The bonus for starting on a later wave (`SCORING.waveSelectBonus`) is paid by the Trench at the end of the first Death Star, not here.
 
 ## Ending a game
 
@@ -91,13 +91,13 @@ When a Stage leaves `shields < 0`, `stepPlaying` sets `dying` and pushes `player
 3. Events `gameOver`, then speech `"REMEMBER"` and `"THE FORCE WILL BE WITH YOU, ALWAYS"`.
 4. `qualifyingRow(state.highScores, state.score)`: if it is 0 or more, `beginInitials(state, row)`; otherwise music `ben` and `enterAttractMode(state, 'banner')`.
 
-`enterAttractMode(state, phase)` is the only way back into `attract`: it sets the mode, sets `fireHeld` and calls `enterAttract`. Only `'highScores'` and `'banner'` are accepted.
+`enterAttractMode(state, phase)` is the only way back into `attract`: it sets the mode and calls `enterAttract`. Only `'highScores'` and `'banner'` are accepted.
 
 ## Initials Entry
 
 The state is `state.initials`, an `InitialsEntry`: `row` (the table row taken, -1 when none), `letters` (entered so far), `hover` (the item under the Cursor: a letter, `' '`, `'RUB'`, `'END'` or `null`) and `frame`.
 
-`qualifyingRow(scores, score)` returns the first row whose score the new score equals or exceeds, or -1; the tenth row, 380,655 by default, is the floor. `insertRow` splices a blank row in and truncates the table to ten, dropping the last. `beginInitials` does that with `state.score`, resets `state.initials`, switches to `initials` with `fireHeld` set, and pushes `highScore { row }` and music `cantina`. From then on the row's `initials` string is kept up to date as letters are chosen, so the renderer shows the row live.
+`qualifyingRow(scores, score)` returns the first row whose score the new score equals or exceeds, or -1; the tenth row, 380,655 by default, is the floor. `insertRow` splices a blank row in and truncates the table to ten, dropping the last. `beginInitials` does that with `state.score`, resets `state.initials`, switches to `initials`, and pushes `highScore { row }` and music `cantina`. From then on the row's `initials` string is kept up to date as letters are chosen, so the renderer shows the row live.
 
 `hoveredItem` is `GETINT`: the Cursor, offset by `ATTRACT.hoverCursorOffset` (-8, -116), is compared with every entry of `INITIALS_ALPHABET`, and the first within `ATTRACT.hoverBox` (24) on both axes and `ATTRACT.hoverOctagon` (32) combined is returned. Once three letters are in, only `RUB` and `END` can be hovered, and the fallback is `END` rather than `null`, so the selector jumps to END as the original's did. The alphabet is A to I down the left, J to U along the bottom, V to Z up the right, then the blank, RUB and END.
 
@@ -159,7 +159,7 @@ Nothing in `src/game/attract/` reads the message tables. The simulation's only d
 | | `positions`, `hitDx`, `hitDy`, `hitSum` | three miniatures; 52, 72, 80 | `selectTarget` |
 | `PACE` | `attract`, `select`, `initials`, `dying` | see table above; 0.0488, 0.0735, 0.069 | `framePeriod` |
 | `TIMING` | `deathFrames` | 40 | `stepFrame` |
-| `OPTIONS` | `startingShields`, `playDifficulty` | 7, 1 | `startGame` |
+| `OPTIONS` | `startingShields`, `playDifficulty` | 7, 0 | `startGame` |
 
 ## Events
 

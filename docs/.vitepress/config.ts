@@ -27,6 +27,8 @@ export default defineConfig({
   title: 'Star Wars Clone',
   description: "A programmer's guide to the browser recreation of Atari's 1983 vector arcade game",
   lang: 'en-GB',
+  /** The built site is served from a sub-directory of coryl.co.uk, not the domain root. */
+  base: '/starwarsdocs/',
   lastUpdated: true,
   cleanUrls: true,
   markdown: {

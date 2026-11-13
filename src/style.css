@@ -1,9 +1,5 @@
 :root {
   --white: #f4f4ff;
-  --red: #ff3030;
-  --green: #30ff30;
-  --blue: #4060ff;
-  --yellow: #ffe030;
   --font: 'Courier New', Courier, monospace;
 }
 
@@ -39,14 +35,4 @@ body {
   position: absolute;
   inset: 0;
   display: block;
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-[hidden] {
-  display: none !important;
 }

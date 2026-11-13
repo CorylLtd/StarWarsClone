@@ -3,6 +3,9 @@ import { DOGFIGHT, OPTIONS, SELECT, TIMING } from './config';
 import { createInitialState } from './state';
 import { dogfightState, FIRE, IDLE, pressFire, runFields, runFrame, runFrames, runFramesInvulnerable } from './testUtils';
 import { loseShield } from './dogfight/guns';
+import { hardness } from './dogfight/waves';
+import { surfaceHardness } from './surface/groundGuns';
+import { completeWave } from './update';
 
 describe('modes', () => {
   it('starts in the attract and stays there without a press', () => {
@@ -182,5 +185,51 @@ describe('fire latch', () => {
     expect(state.frame).toBe(0);
     runFrame(state, IDLE); // the frame that follows must still see the press
     expect(state.mode).toBe('select');
+  });
+
+  it('two clicks in consecutive game frames fire two bolts', () => {
+    const state = dogfightState();
+    // A click: the button down for one field and up again before the frame that consumes it ends.
+    const click = () => {
+      const target = state.frame + 1;
+      const events = runFields(state, 1, FIRE);
+      while (state.frame < target) events.push(...runFields(state, 1, IDLE));
+      return events;
+    };
+    const shots = [...click(), ...click()].filter((e) => e.type === 'laserFired');
+    expect(shots).toHaveLength(2);
+  });
+
+  it('a held button fires once, and the press that starts a game is not also a laser', () => {
+    const state = createInitialState(1);
+    runFrames(state, 3, FIRE);
+    expect(state.mode).toBe('select');
+    runFrames(state, SELECT.countdownFrames + 1, FIRE);
+    expect(state.mode).toBe('playing');
+    expect(runFrames(state, 5, FIRE).filter((e) => e.type === 'laserFired')).toHaveLength(0);
+    runFrame(state, IDLE);
+    expect(runFrames(state, 5, FIRE).filter((e) => e.type === 'laserFired')).toHaveLength(1);
+  });
+});
+
+describe('difficulty', () => {
+  it('ramps by the capped bump each Death Star and the surface sits one notch below the dogfight', () => {
+    const state = dogfightState();
+    expect(state.difficulty).toBe(OPTIONS.playDifficulty);
+    const seen: number[] = [];
+    for (let w = 0; w < 5; w++) {
+      seen.push(hardness(state.wave, state.difficulty));
+      completeWave(state);
+    }
+    const expected: number[] = [];
+    let difficulty: number = OPTIONS.playDifficulty;
+    let bump = 0;
+    for (let w = 0; w < 5; w++) {
+      expected.push(Math.min(15, w + difficulty));
+      bump = Math.min(OPTIONS.difficultyBumpMax, bump + 1);
+      difficulty = Math.min(15, difficulty + bump);
+    }
+    expect(seen).toEqual(expected);
+    expect(surfaceHardness(state)).toBe(hardness(state.wave - 1, state.difficulty));
   });
 });

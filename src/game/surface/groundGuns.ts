@@ -7,8 +7,13 @@ import { fireballImpact, hurtFireball } from '../dogfight/guns';
 import { addScore } from '../dogfight/aliens';
 import { hardness } from '../dogfight/waves';
 
+/** WV.HRD for the Surface: PHIGD computes it from GD.WAV = GM.WAV - 1, one notch easier than the Dogfight's. */
+export function surfaceHardness(state: GameState): number {
+  return hardness(Math.max(0, state.wave - 1), state.difficulty);
+}
+
 function usableSlots(state: GameState): number {
-  const h = Math.min(hardness(state.wave, state.difficulty), 11);
+  const h = Math.min(surfaceHardness(state), 11);
   return SURFACE.gunSlotsByHardness[h];
 }
 

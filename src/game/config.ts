@@ -84,9 +84,6 @@ export const CURSOR = {
   slewNear: 0x30 / 256,
   /** Remaining distance (pot units) above which the far fraction applies. */
   slewFarFrom: 0x40,
-  /** How far the yoke shifts the drawn hood and gun tips at full deflection, VG units. */
-  hoodShiftX: 55,
-  hoodShiftY: 40,
 };
 
 /** The player's view in the Dogfight: auto-aim slew in binary-angle "tics" (1 tic = 360/5632 degrees). */
@@ -346,10 +343,22 @@ export const STARS = {
   brightness: 0x80,
 };
 
-/** Operator option settings at the manufacturer's recommended values (SWOPTS.DOC: 7 starting shields, Moderate difficulty, 1 bonus shield per Death Star). */
+/**
+ * Operator option settings. The manufacturer recommended 7 starting shields,
+ * Moderate difficulty and 1 bonus shield per Death Star (SWOPTS.DOC); this
+ * cabinet is set to Easy with a gentler ramp, chosen from play-testing.
+ */
 export const OPTIONS = {
   startingShields: 7,
-  playDifficulty: 1 as 0 | 1 | 2 | 3,
+  /** 0 Easy, 1 Moderate, 2 Hard, 3 Hardest: the base of the difficulty. */
+  playDifficulty: 0 as 0 | 1 | 2 | 3,
+  /**
+   * The per-Death-Star difficulty bump grows by one each of the first five
+   * waves up to this cap. The original capped it at 4, so Hardness hit its
+   * ceiling by the fifth Death Star; 1 halves that ramp (Hardness 0, 2, 4, 6,
+   * 8 over the first five instead of 0, 2, 5, 9, 14).
+   */
+  difficultyBumpMax: 1,
   bonusShieldsPerDeathStar: 1,
   attractMusicIntervalSeconds: 7 * 60,
 };

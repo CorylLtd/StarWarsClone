@@ -111,4 +111,3 @@ In a dev build `main.ts` attaches the live objects and a set of offline analysis
 
 - There is no scene graph of game objects beyond fixed meshes for the three alien slots and the explosion pieces. Everything else is line geometry rebuilt from the state on every draw.
 - There is no entity system or message bus. Each stage module mutates its own slice of `GameState` and pushes events.
-- `src/game/stages/` holds a `Stage` interface and a `STAGES` table from the milestone-1 skeleton. Nothing imports it: `update.ts` calls each stage's `enter` and `step` functions directly. It can be deleted or brought back into use, but it is not the entry point.

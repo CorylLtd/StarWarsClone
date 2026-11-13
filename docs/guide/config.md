@@ -28,12 +28,13 @@ Every tuning number in the simulation lives in [config.ts](../../src/game/config
 
 ## Operator options
 
-`OPTIONS` holds the cabinet's DIP settings at the manufacturer's recommended values.
+`OPTIONS` holds the cabinet's DIP settings, plus one knob the cabinet did not have. The manufacturer recommended 7 shields, Moderate and 1 bonus shield; this cabinet is set to Easy with a gentler ramp, chosen from play-testing.
 
 | Option | Value | Effect |
 |---|---|---|
 | `startingShields` | 7 | Deflector Shields at the start of a game, and the ceiling bonus shields cannot exceed. |
-| `playDifficulty` | 1 (Moderate) | The base of `state.difficulty`; 0 Easy to 3 Hardest. |
+| `playDifficulty` | 0 (Easy) | The base of `state.difficulty`; 0 Easy to 3 Hardest. |
+| `difficultyBumpMax` | 1 | The cap on the per-Death-Star bump that `completeWave` adds to `difficulty`. The original capped it at 4, so Hardness reached its ceiling by the fifth Death Star (0, 2, 5, 9, 14 from an Easy start); 1 halves the ramp (0, 2, 4, 6, 8). Set 4 for the original. |
 | `bonusShieldsPerDeathStar` | 1 | Added in the Trench's next-wave accounting. |
 | `attractMusicIntervalSeconds` | 420 | Not read; `ATTRACT.musicIntervalSeconds` (400) is the value in use. |
 
